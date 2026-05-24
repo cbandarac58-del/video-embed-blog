@@ -158,7 +158,15 @@ function getCardGradient(slug: string) {
                   href={`/videos/${video.data.slug}`}
                   class="group relative flex flex-col rounded-xl overflow-hidden border border-slate-900 bg-slate-950 hover:border-slate-800 hover:-translate-y-0.5 transition-all"
                 >
-                  <div class={`relative aspect-video w-full bg-gradient-to-br ${getCardGradient(video.data.slug)} transition-all overflow-hidden flex items-center justify-center`}>
+                  <div class={`relative aspect-video w-full overflow-hidden flex items-center justify-center bg-slate-900 ${!video.data.thumbnailUrl ? `bg-gradient-to-br ${getCardGradient(video.data.slug)}` : ''}`}>
+                    {video.data.thumbnailUrl && (
+                      <img 
+                        src={video.data.thumbnailUrl} 
+                        alt={video.data.title} 
+                        loading="lazy"
+                        class="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
+                    )}
                     <div class="absolute inset-0 bg-slate-950/40"></div>
                     <div class="z-10 flex h-8 w-8 items-center justify-center rounded-full bg-slate-950/90 border border-slate-800 text-white group-hover:bg-rose-600 group-hover:border-rose-500 transition-all">
                       <svg class="h-3 w-3 ml-0.5" fill="currentColor" viewBox="0 0 24 24">

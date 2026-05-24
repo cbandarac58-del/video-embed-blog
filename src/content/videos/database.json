@@ -1,0 +1,26 @@
+[
+  {
+    "id": "premium-cinematic-video-shoot-showcase",
+    "title": "Premium Cinematic Video Shoot Showcase",
+    "slug": "premium-cinematic-video-shoot-showcase",
+    "embedUrl": "https://www.youtube.com/embed/dQw4w9WgXcQ",
+    "thumbnailUrl": "https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=800&auto=format&fit=crop&q=80",
+    "tags": ["cinema", "showcase", "quality"],
+    "category": "Cinematic",
+    "rating": 98,
+    "views": 452000,
+    "dateAdded": "2026-05-24"
+  },
+  {
+    "id": "creative-studio-ambient-lighting-tutorial",
+    "title": "Creative Studio Ambient Lighting Tutorial",
+    "slug": "creative-studio-ambient-lighting-tutorial",
+    "embedUrl": "https://www.youtube.com/embed/dQw4w9WgXcQ",
+    "thumbnailUrl": "https://images.unsplash.com/photo-1542204111-374665427dcc?w=800&auto=format&fit=crop&q=80",
+    "tags": ["lighting", "studio", "creative"],
+    "category": "Education",
+    "rating": 92,
+    "views": 182000,
+    "dateAdded": "2026-05-24"
+  }
+]
