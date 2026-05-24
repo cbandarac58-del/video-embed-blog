@@ -42,10 +42,20 @@ if (searchQuery) {
   );
 }
 
+// Parse views into numeric values for reliable sorting
+function parseViews(v: string | number): number {
+  if (typeof v === 'number') return v;
+  const clean = v.trim().toLowerCase();
+  const num = parseFloat(clean);
+  if (clean.includes('m')) return num * 1000000;
+  if (clean.includes('k')) return num * 1000;
+  return num || 0;
+}
+
 // Apply sorting
 filteredVideos.sort((a, b) => {
   if (sortBy === 'views') {
-    return b.data.views - a.data.views;
+    return parseViews(b.data.views) - parseViews(a.data.views);
   } else if (sortBy === 'rating') {
     return b.data.rating - a.data.rating;
   } else {
@@ -54,15 +64,16 @@ filteredVideos.sort((a, b) => {
   }
 });
 
-// Format numbers for views
-function formatViews(num: number) {
-  if (num >= 1000000) {
-    return (num / 1000000).toFixed(1) + 'M';
+// Format numbers or return strings for views
+function formatViews(val: string | number) {
+  if (typeof val === 'string') return val;
+  if (val >= 1000000) {
+    return (val / 1000000).toFixed(1) + 'M';
   }
-  if (num >= 1000) {
-    return (num / 1000).toFixed(0) + 'K';
+  if (val >= 1000) {
+    return (val / 1000).toFixed(0) + 'K';
   }
-  return num.toString();
+  return val.toString();
 }
 
 // Generate procedural styling for card gradients based on slugs to ensure consistent premium design

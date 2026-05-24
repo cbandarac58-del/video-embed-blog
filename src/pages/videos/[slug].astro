@@ -22,14 +22,15 @@ const relatedVideos = allVideos
   .slice(0, 4);
 
 // Format views count
-function formatViews(num: number) {
-  if (num >= 1000000) {
-    return (num / 1000000).toFixed(1) + 'M';
+function formatViews(val: string | number) {
+  if (typeof val === 'string') return val;
+  if (val >= 1000000) {
+    return (val / 1000000).toFixed(1) + 'M';
   }
-  if (num >= 1000) {
-    return (num / 1000).toFixed(0) + 'K';
+  if (val >= 1000) {
+    return (val / 1000).toFixed(0) + 'K';
   }
-  return num.toString();
+  return val.toString();
 }
 
 // Procedural card gradients
