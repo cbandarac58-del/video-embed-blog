@@ -1,0 +1,218 @@
+---
+import { getCollection } from 'astro:content';
+import Layout from '../../layouts/Layout.astro';
+import AdContainer from '../../components/AdContainer.astro';
+
+// Generate static paths for all videos inside the content collection
+export async function getStaticPaths() {
+  const videos = await getCollection('videos');
+  return videos.map((video) => ({
+    params: { slug: video.data.slug },
+    props: { video },
+  }));
+}
+
+const { video } = Astro.props;
+const { title, embedUrl, rating, views, category, tags, dateAdded } = video.data;
+
+// Fetch other videos in the same category for the related videos grid
+const allVideos = await getCollection('videos');
+const relatedVideos = allVideos
+  .filter((v) => v.data.slug !== video.data.slug && v.data.category === category)
+  .slice(0, 4);
+
+// Format views count
+function formatViews(num: number) {
+  if (num >= 1000000) {
+    return (num / 1000000).toFixed(1) + 'M';
+  }
+  if (num >= 1000) {
+    return (num / 1000).toFixed(0) + 'K';
+  }
+  return num.toString();
+}
+
+// Procedural card gradients
+function getCardGradient(slug: string) {
+  const hash = slug.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  const gradients = [
+    'from-rose-600/20 to-purple-600/10 hover:from-rose-500/30 hover:to-purple-500/20',
+    'from-purple-600/20 to-indigo-600/10 hover:from-purple-500/30 hover:to-indigo-500/20',
+    'from-pink-600/20 to-rose-600/10 hover:from-pink-500/30 hover:to-rose-500/20',
+    'from-indigo-600/20 to-violet-600/10 hover:from-indigo-500/30 hover:to-violet-500/20',
+    'from-amber-600/20 to-rose-600/10 hover:from-amber-500/30 hover:to-rose-500/20',
+  ];
+  return gradients[hash % gradients.length];
+}
+---
+
+<Layout title={title} description={`Watch ${title} embedded video online for free. Category: ${category}. Views: ${views}.`}>
+  <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+    
+    <!-- Breadcrumbs & Category back link -->
+    <nav class="mb-4 text-xs text-slate-500 flex items-center space-x-2">
+      <a href="/" class="hover:text-slate-300">Home</a>
+      <span>/</span>
+      <a href={`/?category=${encodeURIComponent(category)}`} class="hover:text-slate-300 uppercase font-bold text-rose-500">{category}</a>
+      <span>/</span>
+      <span class="text-slate-400 line-clamp-1 max-w-[200px] sm:max-w-xs">{title}</span>
+    </nav>
+
+    <!-- Top Banner (Responsive Ad Slot) -->
+    <AdContainer slotType="banner_728x90" className="hidden sm:flex" />
+
+    <!-- Two-Column Layout: Player vs Sidebar -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 mt-6">
+      
+      <!-- Video Player & Metadata (Lefthand/Core column) -->
+      <div class="lg:col-span-8 flex flex-col">
+        
+        <!-- Responsive Player Container (16:9 aspect ratio) -->
+        <div class="relative w-full aspect-video rounded-2xl overflow-hidden border border-slate-900 bg-black shadow-2xl shadow-rose-950/5 group">
+          <!-- Iframe Embed -->
+          <iframe 
+            src={embedUrl} 
+            class="absolute top-0 left-0 w-full h-full"
+            frameborder="0" 
+            allowfullscreen="true" 
+            scrolling="no"
+            title={title}
+          ></iframe>
+        </div>
+
+        <!-- Video Title & Actions -->
+        <div class="mt-6 border-b border-slate-900 pb-6">
+          <h1 class="text-xl font-extrabold text-white sm:text-2xl lg:text-3xl leading-snug">
+            {title}
+          </h1>
+
+          <!-- Stats Dashboard -->
+          <div class="flex flex-wrap items-center justify-between mt-4 gap-4 text-xs text-slate-400">
+            <div class="flex items-center space-x-6">
+              
+              <!-- Views -->
+              <span class="flex items-center">
+                <svg class="h-4 w-4 mr-1.5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+                <strong class="text-slate-200 font-semibold mr-1">{formatViews(views)}</strong> Views
+              </span>
+
+              <!-- Rating -->
+              <span class="flex items-center text-amber-400">
+                <svg class="h-4 w-4 mr-1 text-amber-500" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+                </svg>
+                <strong class="font-bold mr-1">{rating}%</strong> Rating
+              </span>
+
+              <!-- Upload Date -->
+              <span class="hidden sm:inline">
+                Added: <strong class="text-slate-300 font-semibold">{dateAdded}</strong>
+              </span>
+            </div>
+
+            <!-- Action buttons -->
+            <div class="flex items-center space-x-2">
+              <button class="flex items-center space-x-1.5 rounded-lg bg-slate-900 border border-slate-800 hover:border-rose-500 hover:text-white px-3 py-1.5 transition-colors">
+                <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 10.742s-1.839 2.51-1.839 5.258c0 1.543.826 2.37 2.148 2.37 1.44 0 2.215-.815 3.016-1.782.784.957 1.56 1.782 3.016 1.782 1.322 0 2.148-.827 2.148-2.37 0-2.748-1.839-5.258-1.839-5.258m-6.65 0L12 4l3.334 6.742" />
+                </svg>
+                <span>Share</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tags / Categories -->
+        <div class="py-6">
+          <h3 class="text-xs font-bold uppercase tracking-widest text-slate-500 mb-3">Tags & Categories</h3>
+          <div class="flex flex-wrap gap-2">
+            <span class="text-xs rounded-lg bg-rose-950/60 border border-rose-800 text-rose-300 px-3 py-1 font-semibold uppercase">
+              {category}
+            </span>
+            {tags.map((tag) => (
+              <a 
+                href={`/?tag=${encodeURIComponent(tag)}`}
+                class="text-xs rounded-lg bg-slate-900 border border-slate-800 text-slate-400 hover:border-slate-700 hover:text-slate-200 px-3 py-1 transition-colors"
+              >
+                #{tag}
+              </a>
+            ))}
+          </div>
+        </div>
+
+        <!-- Middle Ad Spot (CLS-Free Leaderboard) -->
+        <AdContainer slotType="banner_468x60" className="flex sm:hidden my-4" />
+
+        <!-- Related Videos Grid -->
+        <div class="mt-8 border-t border-slate-900 pt-8">
+          <h2 class="text-lg font-extrabold text-white mb-6">Related Videos</h2>
+          {relatedVideos.length === 0 ? (
+            <p class="text-xs text-slate-500">No other videos in this category yet.</p>
+          ) : (
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              {relatedVideos.map((video) => (
+                <a 
+                  href={`/videos/${video.data.slug}`}
+                  class="group relative flex flex-col rounded-xl overflow-hidden border border-slate-900 bg-slate-950 hover:border-slate-800 hover:-translate-y-0.5 transition-all"
+                >
+                  <div class={`relative aspect-video w-full bg-gradient-to-br ${getCardGradient(video.data.slug)} transition-all overflow-hidden flex items-center justify-center`}>
+                    <div class="absolute inset-0 bg-slate-950/40"></div>
+                    <div class="z-10 flex h-8 w-8 items-center justify-center rounded-full bg-slate-950/90 border border-slate-800 text-white group-hover:bg-rose-600 group-hover:border-rose-500 transition-all">
+                      <svg class="h-3 w-3 ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M8 5v14l11-7z" />
+                      </svg>
+                    </div>
+                    <span class="absolute bottom-2 right-2 rounded bg-slate-950/90 border border-slate-800/80 px-1.5 py-0.5 text-[9px] font-bold text-slate-400">
+                      ★ {video.data.rating}%
+                    </span>
+                  </div>
+                  <div class="p-3">
+                    <h3 class="text-xs font-bold text-slate-200 line-clamp-1 group-hover:text-white transition-colors">
+                      {video.data.title}
+                    </h3>
+                    <div class="flex justify-between items-center text-[10px] text-slate-500 mt-2">
+                      <span>{formatViews(video.data.views)} views</span>
+                      <span>{video.data.category}</span>
+                    </div>
+                  </div>
+                </a>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      <!-- Sidebar Ads / Info (Righthand Column) -->
+      <div class="lg:col-span-4 flex flex-col space-y-6">
+        
+        <!-- Standard Sidebar Rectangle Banner (300x250, CLS-free) -->
+        <div class="flex flex-col items-center justify-center rounded-xl border border-slate-900 bg-slate-950/60 p-4">
+          <AdContainer slotType="banner_300x250" className="my-0" />
+        </div>
+
+        <!-- Compliance & Safe Content Info Box -->
+        <div class="rounded-xl border border-slate-900 bg-slate-950/80 p-5 text-slate-400 text-xs leading-relaxed space-y-3">
+          <h3 class="font-bold text-slate-200 text-sm flex items-center space-x-1.5 border-b border-slate-900 pb-2">
+            <span class="text-rose-500 font-extrabold">🔞</span>
+            <span>Safety & Content Policy</span>
+          </h3>
+          <p>
+            VixTube is a video embed directory indexing publicly hosted video links. We have zero tolerance for illegal content.
+          </p>
+          <div class="bg-slate-900 rounded p-3 text-[11px] border border-slate-800">
+            <strong class="text-slate-300 font-bold block mb-1">Indexing Standards</strong>
+            This page utilizes dynamic meta tags (<code class="text-rose-400 font-mono text-[9px]">rating=adult</code>) conforming to safe search and parent lock filters.
+          </div>
+        </div>
+
+        <!-- Another Sidebar Ad spot to maximize CPM -->
+        <div class="flex flex-col items-center justify-center rounded-xl border border-slate-900 bg-slate-950/60 p-4">
+          <AdContainer slotType="banner_300x250" className="my-0" />
+        </div>
+      </div>
+    </div>
+  </div>
+</Layout>

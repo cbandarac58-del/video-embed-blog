@@ -1,0 +1,23 @@
+{
+  "name": "video-embed-blog",
+  "type": "module",
+  "version": "0.0.1",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "@tailwindcss/postcss": "^4.3.0",
+    "@tailwindcss/vite": "^4.0.0",
+    "astro": "^6.3.7",
+    "axios": "^1.7.0",
+    "cheerio": "^1.0.0-rc.12",
+    "postcss": "^8.5.15",
+    "tailwindcss": "^4.0.0"
+  }
+}

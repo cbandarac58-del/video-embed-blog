@@ -1,0 +1,175 @@
+---
+import '../styles/global.css';
+
+interface Props {
+  title: string;
+  description?: string;
+  keywords?: string;
+}
+
+const { 
+  title, 
+  description = "Watch top-trending and high-quality premium embedded videos completely free. Fully optimized for all mobile devices.",
+  keywords = "videos, free embeds, trending videos, streaming"
+} = Astro.props;
+
+// Absolute URL for SEO
+const canonicalURL = new URL(Astro.url.pathname, Astro.site || 'https://vixtube.com');
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="generator" content={Astro.generator} />
+
+    <!-- SEO Meta Tags -->
+    <title>{title} | VixTube Premium</title>
+    <meta name="description" content={description} />
+    <meta name="keywords" content={keywords} />
+    <link rel="canonical" href={canonicalURL} />
+
+    <!-- Google SafeSearch & Indexing Compliance (Adult Filters) -->
+    <meta name="rating" content="adult" />
+    <meta name="RATING" content="RTA-5042-1996-1104-1554-4306-EST" />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={canonicalURL} />
+    <meta property="og:title" content={`${title} | VixTube`} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content="/og-image.jpg" />
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content={canonicalURL} />
+    <meta property="twitter:title" content={`${title} | VixTube`} />
+    <meta property="twitter:description" content={description} />
+    <meta property="twitter:image" content="/og-image.jpg" />
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&display=swap" rel="stylesheet" />
+
+    <!-- Adsterra Popunder Script Placeholder (Injected without blocking page speed) -->
+    <script is:inline>
+      // Example of where user would place the Adsterra Popunder tag:
+      // (function(s,u,z,p){s.src=u,s.setAttribute('data-sdkpad',z),p.appendChild(s)})(document.createElement('script'),'https://example-popunder-domain.com/zone.js',1234567,document.head);
+      console.log('Adsterra Popunder Script target area ready.');
+    </script>
+
+    <style>
+      body {
+        font-family: 'Outfit', sans-serif;
+      }
+    </style>
+  </head>
+  <body class="flex flex-col min-h-screen bg-slate-950 text-slate-100 selection:bg-rose-500 selection:text-white">
+    
+    <!-- Header with Glassmorphic Navbar -->
+    <header class="sticky top-0 z-40 w-full border-b border-slate-900 bg-slate-950/80 backdrop-blur-md">
+      <div class="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+        
+        <!-- Logo -->
+        <a href="/" class="flex items-center space-x-2 group">
+          <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-rose-500 to-amber-500 font-extrabold text-white text-xl shadow-lg shadow-rose-500/20 group-hover:scale-105 transition-transform">
+            V
+          </div>
+          <span class="text-2xl font-black tracking-tight bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">
+            Vix<span class="bg-gradient-to-r from-rose-500 to-amber-500 bg-clip-text text-transparent">Tube</span>
+          </span>
+        </a>
+
+        <!-- Desktop Navigation -->
+        <nav class="hidden md:flex items-center space-x-8">
+          <a href="/" class="text-sm font-semibold text-slate-300 hover:text-rose-500 transition-colors">Home</a>
+          <a href="/?sort=views" class="text-sm font-semibold text-slate-300 hover:text-rose-500 transition-colors">Popular</a>
+          <a href="/?category=Hardcore" class="text-sm font-semibold text-slate-300 hover:text-rose-500 transition-colors">Featured</a>
+          <span class="flex items-center rounded-full bg-slate-900 px-3 py-1 text-xs font-medium text-rose-400 border border-rose-950/50">
+            <span class="mr-1.5 h-1.5 w-1.5 rounded-full bg-rose-500 animate-pulse"></span>
+            18+ Rated
+          </span>
+        </nav>
+
+        <!-- Search Bar (Client Side Triggered) -->
+        <div class="flex items-center space-x-4">
+          <form action="/" method="GET" class="relative hidden sm:block">
+            <input 
+              type="text" 
+              name="search" 
+              placeholder="Search videos..." 
+              class="w-48 lg:w-64 rounded-full bg-slate-900 border border-slate-800 px-4 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:border-rose-500 focus:outline-none focus:ring-1 focus:ring-rose-500 transition-all"
+            />
+            <button type="submit" class="absolute right-3 top-2.5 text-slate-500 hover:text-rose-500">
+              <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </button>
+          </form>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-1">
+      <slot />
+    </main>
+
+    <!-- Adsterra Social Bar Placeholder (Fixed Position, Bottom Right, doesn't impact CLS) -->
+    <div id="adsterra-social-bar-spot" class="fixed bottom-4 right-4 z-50 pointer-events-none">
+      <!-- User can insert social bar script here. Fixed height container preserves layout. -->
+      <div class="h-[90px] w-[320px] pointer-events-auto bg-slate-950/90 border border-rose-950/50 rounded-lg shadow-xl shadow-rose-950/10 flex items-center justify-between px-4 py-2 text-xs text-slate-400 transition-all select-none backdrop-blur-sm">
+        <div class="flex items-center space-x-2">
+          <span class="flex h-2.5 w-2.5 rounded-full bg-amber-500 animate-ping"></span>
+          <span>Ad Placeholder (Social Bar)</span>
+        </div>
+        <button onclick="this.parentElement.remove()" class="text-slate-500 hover:text-slate-200 pointer-events-auto">✕</button>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-900 bg-slate-950 py-10 mt-12 text-sm text-slate-500">
+      <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div>
+            <div class="flex items-center space-x-2 mb-4">
+              <span class="text-lg font-black text-white">Vix<span class="text-rose-500">Tube</span></span>
+            </div>
+            <p class="text-xs leading-relaxed max-w-xs">
+              VixTube is a fully optimized, responsive video embedding platform. We comply with search indexing policies by implementing explicit meta tags.
+            </p>
+          </div>
+          
+          <div>
+            <h3 class="font-semibold text-slate-300 mb-3">Compliance & Certification</h3>
+            <ul class="space-y-2 text-xs">
+              <li class="flex items-center space-x-2">
+                <span class="rounded bg-rose-950 text-rose-400 px-1.5 py-0.5 font-bold border border-rose-900">RTA</span>
+                <span>Restricted to Adults (RTA-5042)</span>
+              </li>
+              <li>SafeSearch compliance verified</li>
+              <li>18+ Age Verification Required in applicable states</li>
+            </ul>
+          </div>
+
+          <div>
+            <h3 class="font-semibold text-slate-300 mb-3">Legal Links</h3>
+            <div class="grid grid-cols-2 gap-2 text-xs">
+              <a href="#" class="hover:text-slate-300 transition-colors">DMCA Notice</a>
+              <a href="#" class="hover:text-slate-300 transition-colors">Terms of Service</a>
+              <a href="#" class="hover:text-slate-300 transition-colors">Privacy Policy</a>
+              <a href="#" class="hover:text-slate-300 transition-colors">Contact Support</a>
+            </div>
+          </div>
+        </div>
+        
+        <div class="mt-8 border-t border-slate-900 pt-6 text-center text-xs">
+          <p>© {new Date().getFullYear()} VixTube. All rights reserved. The video clips embedded are hosted on third-party servers.</p>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>
