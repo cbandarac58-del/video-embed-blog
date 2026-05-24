@@ -206,11 +206,13 @@ async function run() {
   try {
     // 1. Try XVideos Scraper
     items = await scrapeXVideos();
+    if (items.length === 0) throw new Error("No items crawled from XVideos");
   } catch (err) {
     console.warn(`XVideos crawl failed (${err.message}). Trying Pornhub RSS feed...`);
     try {
       // 2. Try Pornhub RSS Scraper
       items = await scrapePornhubRSS();
+      if (items.length === 0) throw new Error("No items parsed from Pornhub RSS");
     } catch (rssErr) {
       console.warn(`Pornhub RSS scrape failed (${rssErr.message}).`);
       // 3. Fallback to high-quality Mock list
