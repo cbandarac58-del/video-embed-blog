@@ -209,7 +209,8 @@ function getCardGradient(slug: string) {
               <div class={`relative aspect-video w-full overflow-hidden flex items-center justify-center bg-slate-900 ${!thumbnailUrl ? `bg-gradient-to-br ${getCardGradient(slug)}` : ''}`}>
                 {thumbnailUrl && (
                   <img 
-                    src={`/api/proxy?url=${encodeURIComponent(thumbnailUrl)}`} 
+                    src={thumbnailUrl} 
+                    referrerpolicy="no-referrer"
                     alt={title} 
                     loading="lazy"
                     class="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
