@@ -10,6 +10,8 @@ const activeTag = url.searchParams.get('tag') || '';
 const searchQuery = url.searchParams.get('search') || '';
 const sortBy = url.searchParams.get('sort') || 'dateAdded'; // 'dateAdded' or 'views' or 'rating'
 
+const VIDEOS_PER_PAGE = 40;
+
 // Fetch videos collection
 let videos = [];
 try {
@@ -63,6 +65,11 @@ filteredVideos.sort((a, b) => {
     return new Date(b.data.dateAdded).getTime() - new Date(a.data.dateAdded).getTime();
   }
 });
+
+// Pagination — page 1 only on index
+const totalVideos = filteredVideos.length;
+const totalPages = Math.ceil(totalVideos / VIDEOS_PER_PAGE);
+const pagedVideos = filteredVideos.slice(0, VIDEOS_PER_PAGE);
 
 // Format numbers or return strings for views
 function formatViews(val: string | number) {
@@ -197,7 +204,7 @@ function getCardGradient(slug: string) {
       <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
         
         {/* Render Video Cards */}
-        {filteredVideos.map((video, index) => {
+        {pagedVideos.map((video, index) => {
           const { title, slug, rating, views, category, tags, thumbnailUrl } = video.data;
           
           return (
@@ -270,13 +277,41 @@ function getCardGradient(slug: string) {
         })}
         
         {/* High CTR Ad Block integrated natively in the grid if there are enough items */}
-        {filteredVideos.length >= 3 && (
+        {pagedVideos.length >= 3 && (
           <div class="flex flex-col items-center justify-center rounded-xl border border-dashed border-rose-950/20 bg-slate-950/50 p-4 text-center">
             <AdContainer slotType="banner_300x250" className="my-0" />
           </div>
         )}
 
       </div>
+    )}
+
+    {/* Pagination Controls */}
+    {totalPages > 1 && (
+      <div class="mt-12 flex items-center justify-center gap-2 flex-wrap">
+        <span class="flex items-center gap-1 rounded-lg bg-slate-900/40 border border-slate-800/40 px-4 py-2 text-sm font-semibold text-slate-600 cursor-not-allowed">← Prev</span>
+
+        {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
+          <a 
+            href={p === 1 ? '/' : `/page/${p}`}
+            class={`rounded-lg border px-3.5 py-2 text-sm font-bold transition-all ${
+              p === 1 ? 'bg-rose-600 border-rose-500 text-white shadow-lg shadow-rose-600/30' : 'bg-slate-900 border-slate-800 text-slate-400 hover:bg-slate-800 hover:text-white'
+            }`}
+          >
+            {p}
+          </a>
+        ))}
+
+        {totalPages > 1 && (
+          <a href="/page/2" class="flex items-center gap-1 rounded-lg bg-rose-600 border border-rose-500 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-500 transition-all shadow-lg shadow-rose-600/30">
+            Next →
+          </a>
+        )}
+      </div>
+    )}
+
+    {/* Keep original closing if-block — remove extra closing */}
+    {filteredVideos.length === 0 && (<span></span>
     )}
 
     <!-- Footer Tag Cloud -->
