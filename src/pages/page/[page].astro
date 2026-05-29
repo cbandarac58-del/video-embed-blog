@@ -128,14 +128,17 @@ function pageUrl(p: number) {
       <h2 class="text-xs font-bold uppercase tracking-widest text-slate-500 mb-3">Categories</h2>
       <div class="flex space-x-2 overflow-x-auto pb-2 scrollbar-none">
         <a href={pageUrl(1)} class={`rounded-full px-4 py-1.5 text-xs font-semibold whitespace-nowrap border transition-all ${!activeCategory ? 'bg-rose-600 border-rose-500 text-white' : 'bg-slate-900 border-slate-800 text-slate-300 hover:border-slate-700'}`}>All Videos</a>
-        {categories.map((category) => (
-          <a 
-            href={`/page/${currentPage}?category=${encodeURIComponent(category)}`}
-            class={`rounded-full px-4 py-1.5 text-xs font-semibold whitespace-nowrap border transition-all ${activeCategory.toLowerCase() === category.toLowerCase() ? 'bg-rose-600 border-rose-500 text-white' : 'bg-slate-900 border-slate-800 text-slate-300 hover:border-slate-700'}`}
-          >
-            {category}
-          </a>
-        ))}
+        {categories.map((category) => {
+          const catSlug = category.toLowerCase().replace(/\s+/g, '-').replace(/[^\w\-]+/g, '').replace(/\-\-+/g, '-').replace(/^-+/, '').replace(/-+$/, '');
+          return (
+            <a 
+              href={`/category/${catSlug}`}
+              class="rounded-full px-4 py-1.5 text-xs font-semibold whitespace-nowrap border bg-slate-900 border-slate-800 text-slate-300 hover:border-slate-700 transition-all"
+            >
+              {category}
+            </a>
+          );
+        })}
       </div>
     </div>
 

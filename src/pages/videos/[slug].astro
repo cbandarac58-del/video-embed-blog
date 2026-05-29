@@ -14,6 +14,7 @@ export async function getStaticPaths() {
 
 const { video } = Astro.props;
 const { title, embedUrl, rating, views, category, tags, dateAdded } = video.data;
+const catSlug = category.toLowerCase().replace(/\s+/g, '-').replace(/[^\w\-]+/g, '').replace(/\-\-+/g, '-').replace(/^-+/, '').replace(/-+$/, '');
 
 // Fetch other videos in the same category for the related videos grid
 const allVideos = await getCollection('videos');
@@ -54,7 +55,7 @@ function getCardGradient(slug: string) {
     <nav class="mb-4 text-xs text-slate-500 flex items-center space-x-2">
       <a href="/" class="hover:text-slate-300">Home</a>
       <span>/</span>
-      <a href={`/?category=${encodeURIComponent(category)}`} class="hover:text-slate-300 uppercase font-bold text-rose-500">{category}</a>
+      <a href={`/category/${catSlug}`} class="hover:text-slate-300 uppercase font-bold text-rose-500">{category}</a>
       <span>/</span>
       <span class="text-slate-400 line-clamp-1 max-w-[200px] sm:max-w-xs">{title}</span>
     </nav>
