@@ -167,20 +167,20 @@ function getCardGradient(slug: string) {
         <span class="text-xs text-slate-500 font-medium">Sort By:</span>
         <div class="inline-flex rounded-lg bg-slate-900 p-0.5 border border-slate-800 text-xs">
           <a 
-            href={`/?sort=dateAdded${activeCategory ? `&category=${activeCategory}` : ''}${activeTag ? `&tag=${activeTag}` : ''}${searchQuery ? `&search=${searchQuery}` : ''}`}
-            class={`rounded-md px-3 py-1 font-medium transition-colors ${sortBy === 'dateAdded' ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-slate-200'}`}
+            href="/"
+            class="rounded-md px-3 py-1 font-medium transition-colors bg-slate-800 text-white"
           >
             Recent
           </a>
           <a 
-            href={`/?sort=views${activeCategory ? `&category=${activeCategory}` : ''}${activeTag ? `&tag=${activeTag}` : ''}${searchQuery ? `&search=${searchQuery}` : ''}`}
-            class={`rounded-md px-3 py-1 font-medium transition-colors ${sortBy === 'views' ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-slate-200'}`}
+            href="/popular"
+            class="rounded-md px-3 py-1 font-medium transition-colors text-slate-400 hover:text-slate-200"
           >
             Most Viewed
           </a>
           <a 
-            href={`/?sort=rating${activeCategory ? `&category=${activeCategory}` : ''}${activeTag ? `&tag=${activeTag}` : ''}${searchQuery ? `&search=${searchQuery}` : ''}`}
-            class={`rounded-md px-3 py-1 font-medium transition-colors ${sortBy === 'rating' ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-slate-200'}`}
+            href="/featured"
+            class="rounded-md px-3 py-1 font-medium transition-colors text-slate-400 hover:text-slate-200"
           >
             Top Rated
           </a>

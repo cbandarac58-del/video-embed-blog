@@ -104,6 +104,31 @@ function getCardGradient(videoSlug: string) {
         Showing: <span class="text-rose-400 font-medium">Most Popular Videos</span> 
         <span class="text-xs text-slate-600 ml-1">({popularVideos.length} items)</span>
       </div>
+
+      <!-- Sorting Controls -->
+      <div class="flex items-center space-x-2">
+        <span class="text-xs text-slate-500 font-medium">Sort By:</span>
+        <div class="inline-flex rounded-lg bg-slate-900 p-0.5 border border-slate-800 text-xs">
+          <a 
+            href="/"
+            class="rounded-md px-3 py-1 font-medium transition-colors text-slate-400 hover:text-slate-200"
+          >
+            Recent
+          </a>
+          <a 
+            href="/popular"
+            class="rounded-md px-3 py-1 font-medium transition-colors bg-slate-800 text-white"
+          >
+            Most Viewed
+          </a>
+          <a 
+            href="/featured"
+            class="rounded-md px-3 py-1 font-medium transition-colors text-slate-400 hover:text-slate-200"
+          >
+            Top Rated
+          </a>
+        </div>
+      </div>
     </div>
 
     <!-- Video Grid -->
