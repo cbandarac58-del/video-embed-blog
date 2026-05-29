@@ -249,11 +249,17 @@ function pageUrl(p: number) {
     <div class="mt-16 border-t border-slate-900 pt-8">
       <h3 class="text-xs font-bold uppercase tracking-widest text-slate-500 mb-4">Trending Tags</h3>
       <div class="flex flex-wrap gap-2">
-        {allTags.map(tag => (
-          <a href={`/?tag=${encodeURIComponent(tag)}`} class="text-xs rounded-lg border px-3 py-1 transition-all bg-slate-950 border-slate-900 text-slate-400 hover:border-slate-800 hover:text-slate-200">
-            #{tag}
-          </a>
-        ))}
+        {allTags.map(tag => {
+          const tagSlug = tag.toLowerCase().replace(/\s+/g, '-').replace(/[^\w\-]+/g, '').replace(/\-\-+/g, '-').replace(/^-+/, '').replace(/-+$/, '');
+          return (
+            <a 
+              href={`/tag/${tagSlug}`} 
+              class="text-xs rounded-lg border px-3 py-1 transition-all bg-slate-950 border-slate-900 text-slate-400 hover:border-slate-800 hover:text-slate-200"
+            >
+              #{tag}
+            </a>
+          );
+        })}
       </div>
     </div>
   </section>
