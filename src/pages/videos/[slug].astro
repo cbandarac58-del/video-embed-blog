@@ -117,11 +117,11 @@ function getCardGradient(slug: string) {
 
             <!-- Action buttons -->
             <div class="flex items-center space-x-2">
-              <button class="flex items-center space-x-1.5 rounded-lg bg-slate-900 border border-slate-800 hover:border-rose-500 hover:text-white px-3 py-1.5 transition-colors">
+              <button id="share-btn" class="flex items-center space-x-1.5 rounded-lg bg-slate-900 border border-slate-800 hover:border-rose-500 hover:text-white px-3 py-1.5 transition-colors">
                 <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 10.742s-1.839 2.51-1.839 5.258c0 1.543.826 2.37 2.148 2.37 1.44 0 2.215-.815 3.016-1.782.784.957 1.56 1.782 3.016 1.782 1.322 0 2.148-.827 2.148-2.37 0-2.748-1.839-5.258-1.839-5.258m-6.65 0L12 4l3.334 6.742" />
                 </svg>
-                <span>Share</span>
+                <span id="share-btn-text">Share</span>
               </button>
             </div>
           </div>
@@ -228,5 +228,51 @@ function getCardGradient(slug: string) {
         </div>
       </div>
     </div>
+    
+    <!-- Share Button Client Logic -->
+    <script is:inline>
+      document.addEventListener('DOMContentLoaded', () => {
+        const shareBtn = document.getElementById('share-btn');
+        const shareBtnText = document.getElementById('share-btn-text');
+        
+        if (shareBtn) {
+          shareBtn.addEventListener('click', async () => {
+            const shareData = {
+              title: document.title,
+              text: 'Watch this free video on VixTube Premium!',
+              url: window.location.href
+            };
+
+            // Mobile Native Share (if supported)
+            if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
+              try {
+                await navigator.share(shareData);
+                return;
+              } catch (err) {
+                console.log('Native share failed or dismissed:', err);
+              }
+            }
+
+            // Clipboard Copy Fallback (for desktops/laptops)
+            try {
+              await navigator.clipboard.writeText(window.location.href);
+              
+              if (shareBtnText) {
+                const originalText = shareBtnText.textContent;
+                shareBtnText.textContent = 'Copied!';
+                shareBtn.classList.add('border-green-500', 'text-green-400');
+                
+                setTimeout(() => {
+                  shareBtnText.textContent = originalText;
+                  shareBtn.classList.remove('border-green-500', 'text-green-400');
+                }, 2000);
+              }
+            } catch (err) {
+              console.error('Failed to copy to clipboard:', err);
+            }
+          });
+        }
+      });
+    </script>
   </div>
 </Layout>
