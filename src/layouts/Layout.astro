@@ -1,5 +1,6 @@
 ---
 import '../styles/global.css';
+import { getCollection } from 'astro:content';
 
 interface Props {
   title: string;
@@ -15,6 +16,38 @@ const {
 
 // Absolute URL for SEO
 const canonicalURL = new URL(Astro.url.pathname, Astro.site || 'https://vixtube.net');
+
+// Fetch videos collection at build time to build categories/tags slug maps for SEO search routing
+let videos = [];
+try {
+  videos = await getCollection('videos');
+} catch (e) {
+  console.log("No videos found in content layer yet.", e);
+}
+
+const slugify = (text: string) => 
+  text.toString().toLowerCase()
+    .replace(/\s+/g, '-')
+    .replace(/[^\w\-]+/g, '')
+    .replace(/\-\-+/g, '-')
+    .replace(/^-+/, '')
+    .replace(/-+$/, '');
+
+const categorySlugMap: Record<string, string> = {};
+const tagSlugMap: Record<string, string> = {};
+
+videos.forEach(v => {
+  if (v.data.category) {
+    const clean = v.data.category.trim();
+    categorySlugMap[clean.toLowerCase()] = slugify(clean);
+  }
+  (v.data.tags || []).forEach((tag: string) => {
+    const clean = tag.trim();
+    if (clean) {
+      tagSlugMap[clean.toLowerCase()] = slugify(clean);
+    }
+  });
+});
 ---
 
 <!doctype html>
@@ -68,14 +101,14 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site || 'https://vixtube.
       }
     </style>
   </head>
-  <body class="flex flex-col min-h-screen bg-slate-950 text-slate-100 selection:bg-rose-500 selection:text-white">
+  <body class="flex flex-col min-h-screen bg-slate-950 text-slate-100 selection:bg-rose-500 selection:text-white pb-16 md:pb-0">
     
     <!-- Header with Glassmorphic Navbar -->
     <header class="sticky top-0 z-40 w-full border-b border-slate-900 bg-slate-950/80 backdrop-blur-md">
       <div class="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         
         <!-- Logo -->
-        <a href="/" class="flex items-center space-x-2 group">
+        <a href="/" class="flex items-center space-x-2 group flex-shrink-0">
           <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-rose-500 to-amber-500 font-extrabold text-white text-xl shadow-lg shadow-rose-500/20 group-hover:scale-105 transition-transform">
             V
           </div>
@@ -95,14 +128,14 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site || 'https://vixtube.
           </span>
         </nav>
 
-        <!-- Search Bar (Client Side Triggered) -->
-        <div class="flex items-center space-x-4">
-          <form action="/" method="GET" class="relative hidden sm:block">
+        <!-- Search Bar (Client Side Triggered & Responsive) -->
+        <div class="flex items-center space-x-2 sm:space-x-4">
+          <form action="/" method="GET" class="relative">
             <input 
               type="text" 
               name="search" 
-              placeholder="Search videos..." 
-              class="w-48 lg:w-64 rounded-full bg-slate-900 border border-slate-800 px-4 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:border-rose-500 focus:outline-none focus:ring-1 focus:ring-rose-500 transition-all"
+              placeholder="Search..." 
+              class="w-32 xs:w-44 sm:w-48 lg:w-64 rounded-full bg-slate-900 border border-slate-800 px-4 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:border-rose-500 focus:outline-none focus:ring-1 focus:ring-rose-500 transition-all"
             />
             <button type="submit" class="absolute right-3 top-2.5 text-slate-500 hover:text-rose-500">
               <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -172,5 +205,84 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site || 'https://vixtube.
         </div>
       </div>
     </footer>
+
+    <!-- Mobile Bottom Navigation Bar (Floating, premium glassmorphism) -->
+    <nav class="fixed bottom-0 left-0 right-0 z-40 md:hidden bg-slate-950/80 backdrop-blur-lg border-t border-slate-900 px-6 py-2 flex justify-around items-center text-xs font-semibold shadow-lg shadow-black/50">
+      <a href="/" class="flex flex-col items-center space-y-1 text-slate-400 hover:text-rose-500 transition-colors">
+        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+        </svg>
+        <span class="text-[10px]">Home</span>
+      </a>
+      <a href="/popular" class="flex flex-col items-center space-y-1 text-slate-400 hover:text-rose-500 transition-colors">
+        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+        </svg>
+        <span class="text-[10px]">Popular</span>
+      </a>
+      <a href="/featured" class="flex flex-col items-center space-y-1 text-slate-400 hover:text-rose-500 transition-colors">
+        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.907c.961 0 1.36 1.248.588 1.81l-3.97 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.971-2.888a1 1 0 00-1.176 0l-3.97 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.97-2.888c-.777-.562-.379-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+        </svg>
+        <span class="text-[10px]">Featured</span>
+      </a>
+    </nav>
+
+    <!-- Global SEO Search Router Script -->
+    <script is:inline define:vars={{ categorySlugMap, tagSlugMap }}>
+      window.CATEGORY_SLUG_MAP = categorySlugMap;
+      window.TAG_SLUG_MAP = tagSlugMap;
+
+      document.addEventListener('DOMContentLoaded', () => {
+        const searchForms = document.querySelectorAll('form[action="/"]');
+        
+        searchForms.forEach(form => {
+          form.addEventListener('submit', (e) => {
+            const input = form.querySelector('input[name="search"]');
+            if (!input) return;
+            
+            const rawQuery = input.value || '';
+            const query = rawQuery.trim().toLowerCase();
+            if (!query) {
+              e.preventDefault();
+              window.location.href = '/';
+              return;
+            }
+
+            // Check for exact category match
+            if (window.CATEGORY_SLUG_MAP && window.CATEGORY_SLUG_MAP[query]) {
+              e.preventDefault();
+              window.location.href = `/category/${window.CATEGORY_SLUG_MAP[query]}`;
+              return;
+            }
+
+            // Check for exact tag match
+            if (window.TAG_SLUG_MAP && window.TAG_SLUG_MAP[query]) {
+              e.preventDefault();
+              window.location.href = `/tag/${window.TAG_SLUG_MAP[query]}`;
+              return;
+            }
+
+            // Otherwise, let standard form submission take place (goes to /?search=query)
+            // But if we are already on the home page (/), let the local page script handle it instantly
+            if (window.location.pathname === '/' || window.location.pathname === '/index.html') {
+              // The home page's own submit handler intercepts and does preventDefault.
+              // So we don't need to do anything here for the home page.
+            }
+          });
+        });
+        
+        // Highlight active link in mobile bottom nav bar
+        const path = window.location.pathname;
+        const bottomLinks = document.querySelectorAll('nav.fixed a');
+        bottomLinks.forEach(link => {
+          const href = link.getAttribute('href');
+          if (href === path || (href === '/' && path === '/index.html')) {
+            link.classList.remove('text-slate-400');
+            link.classList.add('text-rose-500');
+          }
+        });
+      });
+    </script>
   </body>
 </html>

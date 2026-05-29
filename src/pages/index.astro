@@ -149,7 +149,7 @@ function getCardGradient(slug: string) {
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between border-t border-slate-900 pt-6 mb-8 gap-4">
       
       <!-- Filter status -->
-      <div class="text-sm text-slate-400">
+      <div id="filter-status-text" class="text-sm text-slate-400">
         {searchQuery ? (
           <span>Search results for "<span class="text-rose-400 font-medium">{searchQuery}</span>"</span>
         ) : activeCategory ? (
@@ -335,7 +335,7 @@ function getCardGradient(slug: string) {
         const searchInputs = document.querySelectorAll('input[name="search"]');
         const videoGrid = document.querySelector('#video-grid');
         const paginationContainer = document.querySelector('#pagination-container');
-        const filterStatus = document.querySelector('.text-slate-400');
+        const filterStatus = document.querySelector('#filter-status-text');
         
         let noResultsDiv = document.querySelector('#no-results-message');
         if (!noResultsDiv && videoGrid) {
@@ -493,6 +493,13 @@ function getCardGradient(slug: string) {
                     ${item.views}
                   </span>
                   <span>${item.dateAdded}</span>
+                </div>
+                <div class="flex flex-wrap gap-1 mt-3">
+                  ${(item.tags || []).slice(0, 2).map(tag => `
+                    <span class="text-[9px] bg-slate-900 text-slate-400 border border-slate-800 rounded px-1.5 py-0.5">
+                      #${tag}
+                    </span>
+                  `).join('')}
                 </div>
               </div>
             </a>
