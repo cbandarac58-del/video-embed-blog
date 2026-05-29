@@ -3,6 +3,8 @@ import { getCollection } from 'astro:content';
 import Layout from '../layouts/Layout.astro';
 import AdContainer from '../components/AdContainer.astro';
 
+const PER_PAGE = 40;
+
 let videos = [];
 try {
   videos = await getCollection('videos');
@@ -22,6 +24,9 @@ function parseViews(v: string | number): number {
 
 // Sort all videos by views descending
 const popularVideos = [...videos].sort((a, b) => parseViews(b.data.views) - parseViews(a.data.views));
+const totalVideos = popularVideos.length;
+const totalPages = Math.ceil(totalVideos / PER_PAGE);
+const pagedVideos = popularVideos.slice(0, PER_PAGE);
 
 // Extract unique categories for header
 const categories = [...new Set(videos.map(v => v.data.category))].filter(Boolean);
@@ -52,6 +57,13 @@ function getCardGradient(videoSlug: string) {
   ];
   return gradients[hash % gradients.length];
 }
+
+const nextUrl = totalPages > 1 ? `/popular/2` : null;
+
+// Page numbers to show
+const pageRange = Array.from({ length: totalPages }, (_, i) => i + 1).filter(p =>
+  p === 1 || p === totalPages || Math.abs(p - 1) <= 2
+);
 ---
 
 <Layout 
@@ -102,8 +114,9 @@ function getCardGradient(videoSlug: string) {
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between border-t border-slate-900 pt-6 mb-8 gap-4">
       <div class="text-sm text-slate-400">
         Showing: <span class="text-rose-400 font-medium">Most Popular Videos</span> 
-        <span class="text-xs text-slate-600 ml-1">({popularVideos.length} items)</span>
+        <span class="text-xs text-slate-600 ml-1">({totalVideos} total · showing {pagedVideos.length})</span>
       </div>
+      {totalPages > 1 && <div class="text-xs text-slate-500 font-medium">Page <span class="text-white font-bold">1</span> / {totalPages}</div>}
 
       <!-- Sorting Controls -->
       <div class="flex items-center space-x-2">
@@ -132,13 +145,13 @@ function getCardGradient(videoSlug: string) {
     </div>
 
     <!-- Video Grid -->
-    {popularVideos.length === 0 ? (
+    {pagedVideos.length === 0 ? (
       <div class="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-800 py-20 text-center">
         <h3 class="text-lg font-bold text-slate-200">No Videos Found</h3>
       </div>
     ) : (
       <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-        {popularVideos.map((video) => {
+        {pagedVideos.map((video) => {
           const { title, slug: videoSlug, rating, views, category, thumbnailUrl } = video.data;
           
           return (
@@ -191,6 +204,48 @@ function getCardGradient(videoSlug: string) {
             </a>
           );
         })}
+      </div>
+    )}
+
+    <!-- Pagination -->
+    {totalPages > 1 && (
+      <div class="flex items-center justify-center gap-3 mt-12 pt-8 border-t border-slate-900">
+        <span class="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-900/40 border border-slate-900 text-sm font-semibold text-slate-700 cursor-not-allowed">
+          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+          Previous
+        </span>
+
+        <div class="flex items-center gap-1">
+          {pageRange.map((p, idx) => {
+            const prev = pageRange[idx - 1];
+            const showDots = prev && p - prev > 1;
+            return (
+              <>
+                {showDots && <span class="text-slate-600 px-1">…</span>}
+                <a href={p === 1 ? `/popular` : `/popular/${p}`}
+                  class={`w-9 h-9 flex items-center justify-center rounded-lg text-sm font-bold transition-all ${
+                    p === 1
+                      ? 'bg-rose-600 text-white border border-rose-500 shadow-lg shadow-rose-600/30'
+                      : 'bg-slate-900 border border-slate-800 text-slate-400 hover:bg-slate-800 hover:text-white'}`}>
+                  {p}
+                </a>
+              </>
+            );
+          })}
+        </div>
+
+        {nextUrl ? (
+          <a href={nextUrl}
+            class="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-rose-600 border border-rose-500 text-sm font-semibold text-white hover:bg-rose-500 transition-all shadow-lg shadow-rose-600/20">
+            Next
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+          </a>
+        ) : (
+          <span class="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-900/40 border border-slate-900 text-sm font-semibold text-slate-700 cursor-not-allowed">
+            Next
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+          </span>
+        )}
       </div>
     )}
   </section>
