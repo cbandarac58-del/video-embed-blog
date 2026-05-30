@@ -46,9 +46,35 @@ function getCardGradient(slug: string) {
   ];
   return gradients[hash % gradients.length];
 }
+
+function safeISODate(dateStr: string) {
+  try {
+    const d = new Date(dateStr);
+    if (!isNaN(d.getTime())) {
+      return d.toISOString();
+    }
+  } catch (e) {}
+  return new Date().toISOString();
+}
 ---
 
 <Layout title={title} description={`Watch ${title} embedded video online for free. Category: ${category}. Views: ${views}.`}>
+  {/* Google Video Object Schema */}
+  <script type="application/ld+json" set:html={JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "VideoObject",
+    "name": title,
+    "description": `Watch ${title} adult video online for free. Category: ${category}.`,
+    "thumbnailUrl": thumbnailUrl || "https://vixtube.net/og-image.jpg",
+    "uploadDate": safeISODate(dateAdded),
+    "embedUrl": embedUrl,
+    "interactionStatistic": {
+      "@type": "InteractionCounter",
+      "interactionType": { "@type": "WatchAction" },
+      "userInteractionCount": typeof views === 'number' ? views : parseInt(views) || 0
+    }
+  })} />
+
   <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
     
     <!-- Breadcrumbs & Category back link -->
