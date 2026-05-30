@@ -16,11 +16,33 @@ const { video } = Astro.props;
 const { title, embedUrl, rating, views, category, tags, dateAdded, thumbnailUrl } = video.data;
 const catSlug = category.toLowerCase().replace(/\s+/g, '-').replace(/[^\w\-]+/g, '').replace(/\-\-+/g, '-').replace(/^-+/, '').replace(/-+$/, '');
 
-// Fetch other videos in the same category for the related videos grid
+// Fetch related videos using a smart tag-similarity Jaccard scoring algorithm
 const allVideos = await getCollection('videos');
+
+function getSimilarityScore(videoA: any, videoB: any) {
+  const tagsA = new Set(videoA.data.tags || []);
+  const tagsB = videoB.data.tags || [];
+  
+  let intersectionSize = 0;
+  for (const tag of tagsB) {
+    if (tagsA.has(tag)) {
+      intersectionSize++;
+    }
+  }
+
+  let score = intersectionSize * 10;
+  if (videoA.data.category === videoB.data.category) {
+    score += 5;
+  }
+  return score;
+}
+
 const relatedVideos = allVideos
-  .filter((v) => v.data.slug !== video.data.slug && v.data.category === category)
-  .slice(0, 4);
+  .filter((v) => v.data.slug !== video.data.slug)
+  .map((v) => ({ video: v, score: getSimilarityScore(video, v) }))
+  .sort((a, b) => b.score - a.score)
+  .slice(0, 4)
+  .map((item) => item.video);
 
 // Format views count
 function formatViews(val: string | number) {
