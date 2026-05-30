@@ -212,17 +212,7 @@ videos.forEach(v => {
       <slot />
     </main>
 
-    <!-- Adsterra Social Bar Placeholder (Fixed Position, Bottom Right, doesn't impact CLS) -->
-    <div id="adsterra-social-bar-spot" class="fixed bottom-4 right-4 z-50 pointer-events-none">
-      <!-- User can insert social bar script here. Fixed height container preserves layout. -->
-      <div class="h-[90px] w-[320px] pointer-events-auto bg-slate-950/90 border border-rose-950/50 rounded-lg shadow-xl shadow-rose-950/10 flex items-center justify-between px-4 py-2 text-xs text-slate-400 transition-all select-none backdrop-blur-sm">
-        <div class="flex items-center space-x-2">
-          <span class="flex h-2.5 w-2.5 rounded-full bg-amber-500 animate-ping"></span>
-          <span>Ad Placeholder (Social Bar)</span>
-        </div>
-        <button onclick="this.parentElement.remove()" class="text-slate-500 hover:text-slate-200 pointer-events-auto">✕</button>
-      </div>
-    </div>
+
 
     <!-- Footer -->
     <footer class="border-t border-slate-900 bg-slate-950 py-10 mt-12 text-sm text-slate-500">
