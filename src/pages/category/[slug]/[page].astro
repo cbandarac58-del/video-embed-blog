@@ -102,7 +102,7 @@ const pageRange = Array.from({ length: totalPages }, (_, i) => i + 1).filter(p =
     <!-- Category pills -->
     <div class="mb-6">
       <h2 class="text-xs font-bold uppercase tracking-widest text-slate-500 mb-3">Categories</h2>
-      <div class="flex space-x-2 overflow-x-auto pb-2 scrollbar-none">
+      <div class="flex flex-wrap gap-2">
         <a href="/" class="rounded-full px-4 py-1.5 text-xs font-semibold whitespace-nowrap border bg-slate-900 border-slate-800 text-slate-300 hover:border-slate-700 transition-all">All Videos</a>
         {allCategories.map((cat) => (
           <a href={`/category/${slugify(cat)}`}
