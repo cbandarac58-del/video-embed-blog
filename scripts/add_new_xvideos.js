@@ -258,6 +258,13 @@ async function main() {
     }
     console.log(stdout);
   });
+
+  // Auto-fix any expired thumbnail URLs after adding new videos
+  console.log('\n🖼️  Running thumbnail fix to repair any expired CDN URLs...');
+  exec('node scripts/fix_thumbnails.js', (err, stdout, stderr) => {
+    if (err) { console.error('❌ Thumbnail fix failed:', err.message); return; }
+    console.log(stdout.trim());
+  });
 }
 
 main();

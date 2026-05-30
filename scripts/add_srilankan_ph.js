@@ -252,6 +252,13 @@ async function main() {
     if (err) { console.log('IndexNow skipped:', err.message); return; }
     console.log('📡 IndexNow:', stdout.trim());
   });
+
+  // Auto-fix any expired thumbnail URLs after adding new videos
+  console.log('\n🖼️  Running thumbnail fix to repair any expired CDN URLs...');
+  exec('node scripts/fix_thumbnails.js', { cwd: path.resolve(__dirname, '..') }, (err, stdout) => {
+    if (err) { console.error('❌ Thumbnail fix failed:', err.message); return; }
+    console.log(stdout.trim());
+  });
 }
 
 main();
