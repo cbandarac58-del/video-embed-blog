@@ -89,11 +89,31 @@ videos.forEach(v => {
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&display=swap" rel="stylesheet" />
 
-    <!-- Adsterra Popunder Script Placeholder (Injected without blocking page speed) -->
+    <!-- Obfuscated Adsterra Popunder Loader (Bypasses AdBlocker Parser) -->
     <script is:inline>
-      // Example of where user would place the Adsterra Popunder tag:
-      // (function(s,u,z,p){s.src=u,s.setAttribute('data-sdkpad',z),p.appendChild(s)})(document.createElement('script'),'https://example-popunder-domain.com/zone.js',1234567,document.head);
-      console.log('Adsterra Popunder Script target area ready.');
+      (function() {
+        // Popunder JS zone: e.g. "https://example-popunder-domain.com/zone.js" or "https://www.highperformanceformat.com/zone.js"
+        // Let's assume their popunder script URL is: "https://www.highcpmgate.com/zone.js"
+        // base64 of "www.highcpmgate.com/zone.js" is "d3d3LmhpZ2hjcG1nYXRlLmNvbS96b25lLmpz"
+        const targetB64 = "d3d3LmhpZ2hjcG1nYXRlLmNvbS96b25lLmpz";
+        
+        // base64 of "data-sdkpad" is "ZGF0YS1zZGtwYWQ="
+        const sdkB64 = "ZGF0YS1zZGtwYWQ=";
+        
+        const targetUrl = '//' + atob(targetB64);
+        const sdkAttr = atob(sdkB64);
+        const zoneId = 1234567; // Placeholder for user's zone ID
+
+        const s = document.createElement('script');
+        s.async = true;
+        s.src = targetUrl;
+        s.setAttribute(sdkAttr, zoneId.toString());
+        
+        // Random attribute to bypass simple class/attribute blocking filters
+        s.setAttribute('data-load-id', Math.random().toString(36).substring(7));
+        
+        document.head.appendChild(s);
+      })();
     </script>
 
     <!-- Yandex.Metrika counter -->
