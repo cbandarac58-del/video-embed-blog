@@ -160,11 +160,20 @@ videos.forEach(v => {
     </script>
   </head>
   <body class="flex flex-col min-h-screen bg-slate-950 text-slate-100 selection:bg-rose-500 selection:text-white pb-16 md:pb-0">
-    <!-- AdBlock Popunder Recovery + ExoClick Banner Ad Provider -->
+    <!-- AdBlock Popunder Recovery + ExoClick Ad Providers -->
     <script async type="application/javascript" src="https://a.magsrv.com/ad-provider.js"></script>
+    <script async type="application/javascript" src="https://a.pemsrv.com/ad-provider.js"></script>
     <script is:inline src="/popunder-adblock.js"></script>
 
-    
+    <!-- ExoClick Zone 5938548 (magsrv) -->
+    <ins class="eas6a97888e31" data-zoneid="5938548"></ins>
+    <script>(AdProvider = window.AdProvider || []).push({"serve": {}});</script>
+
+    <!-- ExoClick Zone 5938540 (pemsrv) -->
+    <ins class="eas6a97888e35" data-zoneid="5938540"></ins>
+    <script>(AdProvider = window.AdProvider || []).push({"serve": {}});</script>
+
+
     <!-- Header with Glassmorphic Navbar -->
     <header class="sticky top-0 z-40 w-full border-b border-slate-900 bg-slate-950/80 backdrop-blur-md">
       <div class="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
