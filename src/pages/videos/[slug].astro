@@ -137,6 +137,35 @@ function safeISODate(dateStr: string) {
           )}
         </div>
 
+        <!-- Country Block Banner (shown by Edge Middleware for IN/TR users) -->
+        <div id="country-block-banner" style="display:none;" class="mt-3 flex items-start gap-3 rounded-xl border border-amber-800/60 bg-amber-950/40 px-4 py-3 text-sm text-amber-200">
+          <svg class="mt-0.5 h-5 w-5 shrink-0 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+          </svg>
+          <div>
+            <p class="font-bold text-amber-300">This video may be restricted in your region.</p>
+            <p class="text-xs mt-0.5 text-amber-400">Please use a VPN to watch securely &mdash; turn on your VPN and reload the page.</p>
+          </div>
+        </div>
+
+        <!-- VPN Notice Bar -->
+        <div id="vpn-notice" class="mt-3 flex items-center justify-between gap-3 rounded-xl border border-slate-700/50 bg-slate-900/80 px-4 py-2.5 backdrop-blur-sm">
+          <div class="flex items-center gap-2.5 text-xs text-slate-400">
+            <svg class="h-4 w-4 shrink-0 text-rose-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+            </svg>
+            <span>
+              <strong class="text-slate-300">Video not loading?</strong>
+              &nbsp;Please use a <strong class="text-rose-400">VPN</strong> to watch securely.
+            </span>
+          </div>
+          <button id="vpn-notice-close" aria-label="Dismiss VPN notice" class="ml-2 shrink-0 text-slate-600 hover:text-slate-300 transition-colors">
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+
         <!-- Video Title & Actions -->
         <div class="mt-6 border-b border-slate-900 pb-6">
           <h1 class="text-xl font-extrabold text-white sm:text-2xl lg:text-3xl leading-snug">
@@ -278,9 +307,10 @@ function safeISODate(dateStr: string) {
       </div>
     </div>
     
-    <!-- Share Button Client Logic -->
+    <!-- Share Button + VPN Notice + Country Block Client Logic -->
     <script is:inline>
       document.addEventListener('DOMContentLoaded', () => {
+        // ── Share Button ──────────────────────────────────────────────────────────
         const shareBtn = document.getElementById('share-btn');
         const shareBtnText = document.getElementById('share-btn-text');
         
@@ -320,6 +350,36 @@ function safeISODate(dateStr: string) {
               console.error('Failed to copy to clipboard:', err);
             }
           });
+        }
+
+        // ── VPN Notice Dismiss (remembers via localStorage) ───────────────────────
+        const vpnNotice = document.getElementById('vpn-notice');
+        const vpnClose = document.getElementById('vpn-notice-close');
+
+        if (vpnNotice) {
+          // If user already dismissed it, hide permanently
+          if (localStorage.getItem('vpn-notice-dismissed') === '1') {
+            vpnNotice.style.display = 'none';
+          }
+
+          if (vpnClose) {
+            vpnClose.addEventListener('click', () => {
+              vpnNotice.style.display = 'none';
+              localStorage.setItem('vpn-notice-dismissed', '1');
+            });
+          }
+        }
+
+        // ── Country Block Banner (via cookie set by Vercel Edge Middleware) ───────
+        const countryBanner = document.getElementById('country-block-banner');
+        if (countryBanner) {
+          // Read the "vxt_blocked" cookie set by Edge Middleware
+          const isBlocked = document.cookie.split(';').some(c => c.trim() === 'vxt_blocked=1');
+          if (isBlocked) {
+            countryBanner.style.display = 'flex';
+            // Hide the regular VPN notice when the country-block banner is shown
+            if (vpnNotice) vpnNotice.style.display = 'none';
+          }
         }
       });
     </script>
