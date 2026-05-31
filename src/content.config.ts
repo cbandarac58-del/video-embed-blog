@@ -28,6 +28,7 @@ const videos = defineCollection({
     slug: z.string(),
     embedUrl: z.string(),
     thumbnailUrl: z.string(),
+    description: z.string().optional().default(''),
     tags: z.array(z.string()),
     category: z.string(),
     rating: z.number().min(0).max(100).optional().default(90),
