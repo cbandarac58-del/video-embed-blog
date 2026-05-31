@@ -220,15 +220,30 @@ function pageUrl(p: number) {
         <span class="flex items-center gap-1 rounded-lg bg-slate-900/40 border border-slate-800/40 px-4 py-2 text-sm font-semibold text-slate-600 cursor-not-allowed">← Prev</span>
       )}
 
-      {/* Page numbers */}
-      {Array.from({ length: totalFilteredPages }, (_, i) => i + 1).map(p => (
-        <a 
-          href={pageUrl(p)}
-          class={`rounded-lg border px-3.5 py-2 text-sm font-bold transition-all ${p === currentPage ? 'bg-rose-600 border-rose-500 text-white shadow-lg shadow-rose-600/30' : 'bg-slate-900 border-slate-800 text-slate-400 hover:bg-slate-800 hover:text-white'}`}
-        >
-          {p}
-        </a>
-      ))}
+      {/* Smart truncated page numbers */}
+      {(() => {
+        const delta = 2;
+        const pages: (number | '...')[] = [];
+        pages.push(1);
+        const rangeStart = Math.max(2, currentPage - delta);
+        const rangeEnd   = Math.min(totalFilteredPages - 1, currentPage + delta);
+        if (rangeStart > 2) pages.push('...');
+        for (let i = rangeStart; i <= rangeEnd; i++) pages.push(i);
+        if (rangeEnd < totalFilteredPages - 1) pages.push('...');
+        if (totalFilteredPages > 1) pages.push(totalFilteredPages);
+
+        return pages.map((p, idx) =>
+          p === '...'
+            ? <span key={`dots-${idx}`} class="px-1 text-slate-600 select-none">…</span>
+            : <a
+                key={p}
+                href={pageUrl(p as number)}
+                class={`rounded-lg border px-3.5 py-2 text-sm font-bold transition-all ${p === currentPage ? 'bg-rose-600 border-rose-500 text-white shadow-lg shadow-rose-600/30' : 'bg-slate-900 border-slate-800 text-slate-400 hover:bg-slate-800 hover:text-white'}`}
+              >
+                {p}
+              </a>
+        );
+      })()}
 
       {/* Next */}
       {currentPage < totalFilteredPages ? (
