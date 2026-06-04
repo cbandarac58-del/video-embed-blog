@@ -80,7 +80,7 @@ function safeISODate(dateStr: string) {
 }
 ---
 
-<Layout title={title} description={`Watch ${title} embedded video online for free. Category: ${category}. Views: ${views}.`}>
+<Layout title={title} description={`Watch ${title} embedded video online for free. Category: ${category}. Views: ${views}.`} isVideoPage={true}>
   {/* Google Video Object Schema */}
   <script type="application/ld+json" set:html={JSON.stringify({
     "@context": "https://schema.org",

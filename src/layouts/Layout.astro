@@ -7,12 +7,14 @@ interface Props {
   title: string;
   description?: string;
   keywords?: string;
+  isVideoPage?: boolean;
 }
 
 const { 
   title, 
   description = "Watch top-trending free adult videos, hot amateur clips, and premium XXX streaming content. Fully optimized for all mobile devices.",
-  keywords = "adult videos, free porn, xxx clips, hot amateur, desi bhabhi, stepsister sex, 18+ stream"
+  keywords = "adult videos, free porn, xxx clips, hot amateur, desi bhabhi, stepsister sex, 18+ stream",
+  isVideoPage = false
 } = Astro.props;
 
 // Absolute URL for SEO
@@ -82,6 +84,11 @@ videos.forEach(v => {
     <meta name="google-site-verification" content="E-DT_XvMRPKJ7vYwBh-B4E92iWXB7TDDNXwZl1E01es" />
     <meta name="naver-site-verification" content="d122dd0d8f372b3a5bafaef0c831b66a484d2127" />
     <meta name="6a97888e-site-verification" content="a502c8dde2a7cf20862417e7d4a8d003" />
+
+    <!-- Prevent Google from indexing ad/third-party videos on listing pages.
+         Only individual video watch pages (/videos/[slug]) should be indexed as video pages.
+         This fixes the 'Video isn't on a watch page' GSC error caused by ExoClick ad video content. -->
+    {!isVideoPage && <meta name="robots" content="max-video-preview:0" />}
 
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
