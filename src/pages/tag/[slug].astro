@@ -60,6 +60,10 @@ export async function getStaticPaths() {
 const { tagName, videos, allCategories } = Astro.props;
 const { slug } = Astro.params;
 
+// Unique description: use top 2 video titles for uniqueness
+const topTitles = videos.slice(0, 2).map(v => v.data.title).join(', ');
+const tagDesc = `Watch ${videos.length} free ${tagName} XXX videos online. Top picks: ${topTitles}. Stream HD adult content on any device.`;
+
 function formatViews(val: string | number) {
   if (typeof val === 'string') return val;
   if (val >= 1000000) return (val / 1000000).toFixed(1) + 'M';
@@ -89,8 +93,8 @@ const slugify = (text: string) =>
 ---
 
 <Layout 
-  title={`Watch Free ${tagName} Adult Videos & XXX Clips`}
-  description={`Browse the best free ${tagName} adult videos, hot amateur clips, and premium porn online. High speed streaming on any mobile device.`}
+  title={`${tagName} Videos – ${videos.length} Free XXX Clips | VixTube`}
+  description={tagDesc}
 >
   <!-- Hero Banner -->
   <section class="relative overflow-hidden bg-slate-950 py-12 border-b border-slate-900">
