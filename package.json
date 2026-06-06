@@ -7,7 +7,7 @@
   },
   "scripts": {
     "dev": "astro dev",
-    "build": "astro build",
+    "build": "node -e \"const fs = require('fs'); fs.rmSync('.astro', {recursive: true, force: true});\" && astro build",
     "preview": "astro preview",
     "astro": "astro",
     "indexnow": "node scripts/indexnow.js"
