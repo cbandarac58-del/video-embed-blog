@@ -1,7 +1,7 @@
 import { defineMiddleware } from 'astro:middleware';
 
 // Countries where adult content is commonly blocked
-const BLOCKED_COUNTRIES = ['IN', 'TR'];
+const BLOCKED_COUNTRIES: string[] = [];
 
 export const onRequest = defineMiddleware(async (context, next) => {
   const response = await next();
