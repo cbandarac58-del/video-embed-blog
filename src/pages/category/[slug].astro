@@ -19,8 +19,6 @@ export async function getStaticPaths() {
       .replace(/\-\-+/g, '-').replace(/^-+/, '').replace(/-+$/, '');
 
   const categories = [...new Set(videos.map(v => v.data.category))].filter(Boolean).sort((a, b) => {
-    if (a === 'Sri Lankan') return -1;
-    if (b === 'Sri Lankan') return 1;
     if (a === 'Indian') return -1;
     if (b === 'Indian') return 1;
     return a.localeCompare(b);
