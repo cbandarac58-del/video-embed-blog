@@ -1,18 +1,28 @@
 ---
-import { getCollection } from 'astro:content';
+import { getCollection, getEntry } from 'astro:content';
 import Layout from '../../layouts/Layout.astro';
 import AdContainer from '../../components/AdContainer.astro';
 
-// Generate static paths for all videos inside the content collection
-export async function getStaticPaths() {
-  const videos = await getCollection('videos');
-  return videos.map((video) => ({
-    params: { slug: video.data.slug },
-    props: { video },
-  }));
+export const prerender = false;
+
+const { slug } = Astro.params;
+
+if (!slug) {
+  return new Response(null, {
+    status: 404,
+    statusText: 'Not found'
+  });
 }
 
-const { video } = Astro.props;
+const video = await getEntry('videos', slug);
+
+if (!video) {
+  return new Response(null, {
+    status: 404,
+    statusText: 'Not Found'
+  });
+}
+
 const { title, embedUrl, rating, views, category, tags, dateAdded, thumbnailUrl } = video.data;
 const catSlug = category.toLowerCase().replace(/\s+/g, '-').replace(/[^\w\-]+/g, '').replace(/\-\-+/g, '-').replace(/^-+/, '').replace(/-+$/, '');
 

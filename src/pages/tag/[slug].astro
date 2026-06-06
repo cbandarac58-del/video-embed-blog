@@ -3,62 +3,60 @@ import { getCollection } from 'astro:content';
 import Layout from '../../layouts/Layout.astro';
 import AdContainer from '../../components/AdContainer.astro';
 
-export async function getStaticPaths() {
-  let videos = [];
-  try {
-    videos = await getCollection('videos');
-  } catch (e) {
-    console.log("No videos found in content layer", e);
-  }
+export const prerender = false;
 
-  // Helper to slugify tag names consistently
-  const slugify = (text: string) => 
-    text.toString().toLowerCase()
-      .replace(/\s+/g, '-')
-      .replace(/[^\w\-]+/g, '')
-      .replace(/\-\-+/g, '-')
-      .replace(/^-+/, '')
-      .replace(/-+$/, '');
+const { slug } = Astro.params;
 
-  // Extract unique categories and tags
-  const categories = [...new Set(videos.map(v => v.data.category))].filter(Boolean);
-  
-  // Extract all unique tags
-  const tagsMap = new Map();
-  videos.forEach(v => {
-    (v.data.tags || []).forEach(tag => {
-      const tagClean = tag.trim();
-      if (tagClean) {
-        const slug = slugify(tagClean);
-        if (!tagsMap.has(slug)) {
-          tagsMap.set(slug, {
-            tagName: tagClean,
-            videos: []
-          });
-        }
-        tagsMap.get(slug).videos.push(v);
-      }
-    });
-  });
-
-  return Array.from(tagsMap.entries()).map(([slug, data]) => {
-    // Sort videos by date added descending
-    const tagVideos = data.videos;
-    tagVideos.sort((a, b) => new Date(b.data.dateAdded).getTime() - new Date(a.data.dateAdded).getTime());
-
-    return {
-      params: { slug },
-      props: { 
-        tagName: data.tagName,
-        videos: tagVideos,
-        allCategories: categories
-      }
-    };
+if (!slug) {
+  return new Response(null, {
+    status: 404,
+    statusText: 'Not found'
   });
 }
 
-const { tagName, videos, allCategories } = Astro.props;
-const { slug } = Astro.params;
+// Helper to slugify tag names consistently
+const slugify = (text: string) => 
+  text.toString().toLowerCase()
+    .replace(/\s+/g, '-')
+    .replace(/[^\w\-]+/g, '')
+    .replace(/\-\-+/g, '-')
+    .replace(/^-+/, '')
+    .replace(/-+$/, '');
+
+let allVideos = [];
+try {
+  allVideos = await getCollection('videos');
+} catch (e) {
+  console.log("No videos found in content layer", e);
+}
+
+// Extract unique categories
+const allCategories = [...new Set(allVideos.map(v => v.data.category))].filter(Boolean);
+
+// Find videos with this tag
+const matchingVideos = allVideos.filter(v => 
+  (v.data.tags || []).some(tag => slugify(tag) === slug)
+);
+
+if (matchingVideos.length === 0) {
+  return new Response(null, {
+    status: 404,
+    statusText: 'Tag Not Found'
+  });
+}
+
+// Get the original tagName (use the first match)
+let tagName = slug;
+for (const v of matchingVideos) {
+  const match = (v.data.tags || []).find(tag => slugify(tag) === slug);
+  if (match) {
+    tagName = match.trim();
+    break;
+  }
+}
+
+// Sort matching videos by date added descending
+const videos = matchingVideos.sort((a, b) => new Date(b.data.dateAdded).getTime() - new Date(a.data.dateAdded).getTime());
 
 // Unique description: use top 2 video titles for uniqueness
 const topTitles = videos.slice(0, 2).map(v => v.data.title).join(', ');
@@ -82,14 +80,6 @@ function getCardGradient(videoSlug: string) {
   ];
   return gradients[hash % gradients.length];
 }
-
-const slugify = (text: string) => 
-  text.toString().toLowerCase()
-    .replace(/\s+/g, '-')
-    .replace(/[^\w\-]+/g, '')
-    .replace(/\-\-+/g, '-')
-    .replace(/^-+/, '')
-    .replace(/-+$/, '');
 ---
 
 <Layout 
