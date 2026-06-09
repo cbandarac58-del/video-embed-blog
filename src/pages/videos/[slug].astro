@@ -30,6 +30,21 @@ const catSlug = category.toLowerCase().replace(/\s+/g, '-').replace(/[^\w\-]+/g,
 // Fetch related videos using a smart tag-similarity Jaccard scoring algorithm
 const allVideos = await getCollection('videos');
 
+// Solve duplicate page title / description issue for Yandex/Google SEO
+const duplicateVideos = allVideos.filter(v => v.data.title === title);
+let uniqueTitle = title;
+let uniqueDescription = `Watch ${title} embedded video online for free. Category: ${category}. Views: ${views}.`;
+
+if (duplicateVideos.length > 1) {
+  // Sort duplicates stably by slug to keep indices consistent
+  duplicateVideos.sort((a, b) => a.data.slug.localeCompare(b.data.slug));
+  const duplicateIndex = duplicateVideos.findIndex(v => v.data.slug === slug);
+  if (duplicateIndex !== -1) {
+    uniqueTitle = `${title} - Clip ${duplicateIndex + 1}`;
+    uniqueDescription = `Watch ${title} - Clip ${duplicateIndex + 1} embedded video online for free. Category: ${category}. Views: ${views}.`;
+  }
+}
+
 function getSimilarityScore(videoA: any, videoB: any) {
   const tagsA = new Set(videoA.data.tags || []);
   const tagsB = videoB.data.tags || [];
@@ -91,13 +106,13 @@ function safeISODate(dateStr: string) {
 }
 ---
 
-<Layout title={title} description={`Watch ${title} embedded video online for free. Category: ${category}. Views: ${views}.`} isVideoPage={true}>
+<Layout title={uniqueTitle} description={uniqueDescription} isVideoPage={true}>
   {/* Google Video Object Schema */}
   <script type="application/ld+json" set:html={JSON.stringify({
     "@context": "https://schema.org",
     "@type": "VideoObject",
-    "name": title,
-    "description": `Watch ${title} adult video online for free. Category: ${category}.`,
+    "name": uniqueTitle,
+    "description": `Watch ${uniqueTitle} adult video online for free. Category: ${category}.`,
     "thumbnailUrl": thumbnailUrl || "https://vixtube.net/og-image.jpg",
     "uploadDate": safeISODate(dateAdded),
     "embedUrl": embedUrl,
@@ -116,7 +131,7 @@ function safeISODate(dateStr: string) {
       <span>/</span>
       <a href={`/category/${catSlug}`} class="hover:text-slate-300 uppercase font-bold text-rose-500">{category}</a>
       <span>/</span>
-      <span class="text-slate-400 line-clamp-1 max-w-[200px] sm:max-w-xs">{title}</span>
+      <span class="text-slate-400 line-clamp-1 max-w-[200px] sm:max-w-xs">{uniqueTitle}</span>
     </nav>
 
 
@@ -245,7 +260,7 @@ function safeISODate(dateStr: string) {
         <!-- Video Title & Actions -->
         <div class="mt-6 border-b border-slate-900 pb-6">
           <h1 class="text-xl font-extrabold text-white sm:text-2xl lg:text-3xl leading-snug">
-            {title}
+            {uniqueTitle}
           </h1>
 
           <!-- Stats Dashboard -->
