@@ -269,6 +269,22 @@ function getRandomViews() {
 function getRandomRating() { return Math.floor(Math.random()*9)+87; }
 function sleep(ms) { return new Promise(r=>setTimeout(r,ms)); }
 
+async function safeWriteFile(filePath, content) {
+  let attempts = 5;
+  while (attempts > 0) {
+    try {
+      fs.writeFileSync(filePath, content, 'utf-8');
+      return;
+    } catch (err) {
+      attempts--;
+      if (attempts === 0) throw err;
+      console.log(`\n⚠️  File write failed (likely locked). Retrying in 2s... (${attempts} attempts left)`);
+      await sleep(2000);
+    }
+  }
+}
+
+
 // ─── Fetch single video metadata ──────────────────────────────────────────────
 async function fetchVideoMeta(url) {
   const videoId = extractVideoId(url);
@@ -377,7 +393,7 @@ async function main() {
       // Save progress after every page (safe checkpoint)
       if (allNewEntries.length > 0) {
         const updated = [...allNewEntries, ...existing];
-        fs.writeFileSync(dbPath, JSON.stringify(updated, null, 2), 'utf-8');
+        await safeWriteFile(dbPath, JSON.stringify(updated, null, 2));
       }
 
       await sleep(1500); // pause between pages
@@ -385,7 +401,7 @@ async function main() {
   }
 
   const finalDb = [...allNewEntries, ...existing];
-  fs.writeFileSync(dbPath, JSON.stringify(finalDb, null, 2), 'utf-8');
+  await safeWriteFile(dbPath, JSON.stringify(finalDb, null, 2));
 
   console.log('\n' + '='.repeat(60));
   console.log(`🎉 DONE! Added ${allNewEntries.length} new videos.`);

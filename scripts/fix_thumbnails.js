@@ -11,8 +11,25 @@ function sleep(ms) {
   return new Promise(res => setTimeout(res, ms));
 }
 
+async function safeWriteFile(filePath, content) {
+  let attempts = 5;
+  while (attempts > 0) {
+    try {
+      fs.writeFileSync(filePath, content, 'utf-8');
+      return;
+    } catch (err) {
+      attempts--;
+      if (attempts === 0) throw err;
+      console.log(`\n⚠️  File write failed (likely locked). Retrying in 2s... (${attempts} attempts left)`);
+      await sleep(2000);
+    }
+  }
+}
+
 function isExpiredThumb(url) {
   if (!url || url.trim() === '') return true;
+  // Skip YouTube thumbnails since they contain "default" in "hqdefault.jpg"
+  if (url.includes('youtube.com') || url.includes('youtu.be')) return false;
   // pix-fl / pix-cdn77 with signed token
   if (url.includes('hdnea=')) return true;
   // Empty or placeholder
@@ -101,7 +118,7 @@ async function main() {
   }
 
   // Save updated database
-  fs.writeFileSync(dbPath, JSON.stringify(db, null, 2), 'utf-8');
+  await safeWriteFile(dbPath, JSON.stringify(db, null, 2));
 
   console.log(`\n✅ Fixed: ${fixed} thumbnails`);
   console.log(`❌ Could not fix: ${failed} thumbnails`);
