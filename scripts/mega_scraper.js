@@ -62,22 +62,22 @@ const EXCLUDE_TAGS = new Set([
 
 const CATEGORY_MAP = [
   { keys: ['indian','desi','hindi','jiju','saali','bhabhi','malkin','devar','debar','nokar','punjabi','bengali','tamil','telugu'], cat: 'Indian' },
-  { keys: ['stepsister','step-sister','stepsis','stepsiblings','stepdaughter','step-daughter'], cat: 'stepsister' },
+  { keys: ['stepsister','step-sister','stepsis','stepsiblings','stepdaughter','step-daughter'], cat: 'Stepsister' },
   { keys: ['stepmom','step-mom','milf','mature','stepmother','cougar','stepaunt'], cat: 'MILF' },
-  { keys: ['latina','colombia','venezolana','spanish','mexican','peru','argentina'], cat: 'latina' },
-  { keys: ['lesbian','girlsway','girl-on-girl'], cat: 'lesbian' },
-  { keys: ['anal','ass-fuck','anal-sex','analed','butt-fuck'], cat: 'anal' },
-  { keys: ['asian','japanese','korean','thai','chinese','filipina'], cat: 'asian' },
-  { keys: ['threesome','3some','gangbang','dp','double-penetration','group','orgy','foursome'], cat: 'threesome' },
-  { keys: ['arab','arabic','hijab','muslim','egyptian','turkish','moroccan','lebanese'], cat: 'arab' },
-  { keys: ['ebony','black','bbc','interracial'], cat: 'ebony' },
-  { keys: ['big-ass','big-butt','booty','pawg','bubble-butt','fat-ass'], cat: 'big-ass' },
-  { keys: ['big-tits','big-boobs','huge-tits','busty','large-breasts'], cat: 'big-tits' },
-  { keys: ['teen','teenager','18','young','college','student'], cat: 'teen' },
-  { keys: ['hardcore','rough','pounded','bdsm','dominated','rough-sex'], cat: 'hardcore' },
-  { keys: ['doctor','nurse','gyno','medical','hospital'], cat: 'doctor' },
-  { keys: ['massage','spa','masseuse'], cat: 'massage' },
-  { keys: ['office','boss','secretary','workplace','colleague'], cat: 'office' },
+  { keys: ['latina','colombia','venezolana','spanish','mexican','peru','argentina'], cat: 'Latina' },
+  { keys: ['lesbian','girlsway','girl-on-girl'], cat: 'Lesbian' },
+  { keys: ['anal','ass-fuck','anal-sex','analed','butt-fuck'], cat: 'Anal' },
+  { keys: ['asian','japanese','korean','thai','chinese','filipina'], cat: 'Asian' },
+  { keys: ['threesome','3some','gangbang','dp','double-penetration','group','orgy','foursome'], cat: 'Threesome' },
+  { keys: ['arab','arabic','hijab','muslim','egyptian','turkish','moroccan','lebanese'], cat: 'Arab' },
+  { keys: ['ebony','black','bbc','interracial'], cat: 'Ebony' },
+  { keys: ['big-ass','big-butt','booty','pawg','bubble-butt','fat-ass'], cat: 'Big Ass' },
+  { keys: ['big-tits','big-boobs','huge-tits','busty','large-breasts'], cat: 'Big Tits' },
+  { keys: ['teen','teenager','18','young','college','student'], cat: 'Teen' },
+  { keys: ['hardcore','rough','pounded','bdsm','dominated','rough-sex'], cat: 'Hardcore' },
+  { keys: ['doctor','nurse','gyno','medical','hospital'], cat: 'Doctor' },
+  { keys: ['massage','spa','masseuse'], cat: 'Massage' },
+  { keys: ['office','boss','secretary','workplace','colleague'], cat: 'Office' },
 ];
 
 const SEO_TEMPLATES = {
@@ -95,112 +95,112 @@ const SEO_TEMPLATES = {
     k => `${k} MILF – Mature Beauty's Secret Naughty Fantasy`,
     k => `Sexy ${k} Stepmom Shows Stepson What Real Sex Is`,
   ],
-  stepsister: [
+  Stepsister: [
     k => `Naughty Stepsister ${k} Begs To Get Fucked Hard`,
     k => `${k} Stepsister Catches Stepbro Watching – Then Joins In`,
     k => `Taboo ${k} – Hot Stepsister Can't Resist Stepbrother`,
     k => `${k} Stepsis Needs A Big Cock Favor From Her Stepbro`,
     k => `Wild Stepsister ${k} – Secret Bedroom Fantasy Revealed`,
   ],
-  latina: [
+  Latina: [
     k => `Spicy Latina ${k} – Fiery Passionate Fuck Session`,
     k => `Hot ${k} Latina Rides Big Cock Like A Champion`,
     k => `Curvy Latina ${k} Gets Pounded In Every Position`,
     k => `${k} Latina Takes It Deep & Loves Every Second`,
     k => `${k} – Sexy Latina Beauty's Wild Night`,
   ],
-  arab: [
+  Arab: [
     k => `Sexy Arab ${k} – Hidden Desires Finally Revealed`,
     k => `${k} Hijab Beauty Gets Naughty Behind Closed Doors`,
     k => `Hot Arabic ${k} – Taboo Passion & Wild Fucking`,
     k => `${k} – Stunning Arab Babe's Secret Sex Tape`,
     k => `Forbidden Arab ${k} – Passionate Hidden Romance`,
   ],
-  anal: [
+  Anal: [
     k => `${k} – Tight Ass Gets Destroyed In Hardcore Anal`,
     k => `Anal Obsessed ${k} – Deep Ass Fucking Session`,
     k => `${k} Takes Big Cock Deep In Her Perfect Tight Ass`,
     k => `First Time Anal ${k} – She Can't Believe How Good It Feels`,
     k => `${k} – Butthole Destroyed By Massive Cock Anal Fuck`,
   ],
-  threesome: [
+  Threesome: [
     k => `${k} – Wild Threesome Nobody Could Resist`,
     k => `Hot ${k} Threesome – Two Girls One Lucky Guy`,
     k => `${k} Group Sex – Everybody Gets What They Want`,
     k => `Steamy ${k} Threesome – Sharing Is Caring In Bed`,
     k => `${k} – DP Threesome Fantasy Becomes Reality`,
   ],
-  ebony: [
+  Ebony: [
     k => `${k} – Sexy Ebony Beauty Takes BBC Deep`,
     k => `Hot Ebony ${k} – Wild Interracial Fuck Session`,
     k => `${k} Ebony Babe Riding BBC Like A Pro`,
     k => `${k} – Big Black Dick Pounds Her Tight Wet Pussy`,
     k => `Gorgeous ${k} – Ebony Queen's Passionate Night`,
   ],
-  'big-ass': [
+  'Big Ass': [
     k => `${k} – Massive Booty Gets Worshipped & Destroyed`,
     k => `Thicc ${k} – Big Ass Beauty Loves Hard Doggystyle`,
     k => `${k} PAWG Takes Every Inch Deep Inside Her`,
     k => `Fat Ass ${k} – Bubble Butt Riding Session`,
     k => `${k} – Huge Ass Babe's Wild Fuck Fantasy`,
   ],
-  'big-tits': [
+  'Big Tits': [
     k => `${k} – Busty Beauty's Big Tits Bounce Hard`,
     k => `Massive Tits ${k} – She Loves Getting Her Boobs Fucked`,
     k => `${k} Busty Babe – Huge Natural Tits & Wild Riding`,
     k => `${k} – Big Boobs MILF Can't Say No`,
     k => `${k} Titty Fuck – She's Got The Biggest Rack Ever`,
   ],
-  teen: [
+  Teen: [
     k => `${k} – 18yo Teen Beauty's First Wild Experience`,
     k => `Hot Teen ${k} – Young & Horny First Time`,
     k => `${k} College Teen Can't Get Enough Cock`,
     k => `Innocent ${k} Teen Goes Wild In Secret Session`,
     k => `${k} – Petite Teen Takes Huge Cock Like A Pro`,
   ],
-  hardcore: [
+  Hardcore: [
     k => `${k} – Rough Hardcore Fuck She Won't Forget`,
     k => `Hard & Fast ${k} – No Mercy Rough Sex Session`,
     k => `${k} Gets Pounded Mercilessly In Wild Hardcore Scene`,
     k => `Dominant ${k} – Rough Fuck Until She Screams`,
     k => `${k} – Balls Deep Rough Fucking Non Stop`,
   ],
-  lesbian: [
+  Lesbian: [
     k => `${k} – Hot Lesbian Passion Between Two Beauties`,
     k => `Sensual ${k} – Girls Making Each Other Cum`,
     k => `${k} Lesbian Fantasy – Tongue & Fingers All Night`,
     k => `${k} – Two Hot Girls Can't Keep Hands Off Each Other`,
     k => `Steamy Lesbian ${k} – Scissoring & Squirting Session`,
   ],
-  asian: [
+  Asian: [
     k => `${k} – Exotic Asian Beauty's Passionate Sex Scene`,
     k => `Hot ${k} Asian Babe Rides Hard Until She Cums`,
     k => `Petite Asian ${k} Takes Big Cock In Tight Pussy`,
     k => `${k} – Japanese Cutie Gets Pounded Deep`,
     k => `${k} – Gorgeous Asian Beauty's Wild Sex Fantasy`,
   ],
-  doctor: [
+  Doctor: [
     k => `${k} – Horny Doctor Gives His Patient A Special Exam`,
     k => `Pervy Doctor ${k} – Medical Check Turns Into Wild Fuck`,
     k => `${k} Nurse Fantasy – Clinic Visit Gets Very Naughty`,
     k => `${k} – Doctor Prescribes Big Cock For Hot Patient`,
     k => `Secret ${k} – Doctor & Patient's Forbidden Affair`,
   ],
-  massage: [
+  Massage: [
     k => `${k} – Relaxing Massage Turns Into Wild Sex Session`,
     k => `Hot ${k} – Masseuse Goes Beyond The Table`,
     k => `${k} – She Came For A Massage, Got Fucked Instead`,
     k => `${k} Happy Ending – Masseuse Gives Ultimate Relief`,
     k => `${k} – Oily Massage Leads To Passionate Fucking`,
   ],
-  office: [
+  Office: [
     k => `${k} – Boss Fucks Hot Secretary After Hours`,
     k => `Office ${k} – Naughty Colleague Gets What She Wants`,
     k => `${k} – Late Night Office Fuck Nobody Expected`,
     k => `Hot Boss ${k} – Power Play Turns Into Wild Sex`,
     k => `${k} – She Earned That Promotion On Her Knees`,
   ],
-  amateur: [
+  Amateur: [
     k => `${k} – Real Amateur Couple's Steamy Home Session`,
     k => `${k} Homemade – Genuine Passion Caught On Cam`,
     k => `Real ${k} – Amateur Beauty's Wild Orgasm`,
@@ -212,22 +212,22 @@ const SEO_TEMPLATES = {
 const CATEGORY_TAGS = {
   Indian:    ['desi','indian','hindi','homemade','bhabhi','indian-sex'],
   MILF:      ['milf','stepmom','mature','big-tits','stepson','cougar'],
-  stepsister:['stepsister','taboo','stepbrother','teen','petite','family-taboo'],
-  latina:    ['latina','spanish','curvy','big-ass','passionate','exotic'],
-  arab:      ['arab','hijab','muslim','arabic','exotic','middle-eastern'],
-  anal:      ['anal','ass-fuck','big-ass','hardcore','creampie','tight-ass'],
-  threesome: ['threesome','dp','group-sex','two-girls','big-cock','sharing'],
-  ebony:     ['ebony','bbc','interracial','big-ass','black','chocolate'],
-  'big-ass': ['big-ass','pawg','booty','doggystyle','curvy','bubble-butt'],
-  'big-tits':['big-tits','busty','milf','natural-tits','boobs','titty-fuck'],
-  teen:      ['teen','18','young','petite','college','first-time'],
-  hardcore:  ['hardcore','rough','pounded','rough-sex','dominated','intense'],
-  lesbian:   ['lesbian','girl-on-girl','pussy-licking','strap-on','sensual','scissoring'],
-  asian:     ['asian','exotic','petite','japanese','tight','cute'],
-  doctor:    ['doctor','nurse','medical','gyno','exam','clinic'],
-  massage:   ['massage','oily','happy-ending','masseuse','sensual','erotic'],
-  office:    ['office','boss','secretary','workplace','business','heels'],
-  amateur:   ['amateur','homemade','real','couple','authentic','voyeur'],
+  Stepsister:['stepsister','taboo','stepbrother','teen','petite','family-taboo'],
+  Latina:    ['latina','spanish','curvy','big-ass','passionate','exotic'],
+  Arab:      ['arab','hijab','muslim','arabic','exotic','middle-eastern'],
+  Anal:      ['anal','ass-fuck','big-ass','hardcore','creampie','tight-ass'],
+  Threesome: ['threesome','dp','group-sex','two-girls','big-cock','sharing'],
+  Ebony:     ['ebony','bbc','interracial','big-ass','black','chocolate'],
+  'Big Ass': ['big-ass','pawg','booty','doggystyle','curvy','bubble-butt'],
+  'Big Tits':['big-tits','busty','milf','natural-tits','boobs','titty-fuck'],
+  Teen:      ['teen','18','young','petite','college','first-time'],
+  Hardcore:  ['hardcore','rough','pounded','rough-sex','dominated','intense'],
+  Lesbian:   ['lesbian','girl-on-girl','pussy-licking','strap-on','sensual','scissoring'],
+  Asian:     ['asian','exotic','petite','japanese','tight','cute'],
+  Doctor:    ['doctor','nurse','medical','gyno','exam','clinic'],
+  Massage:   ['massage','oily','happy-ending','masseuse','sensual','erotic'],
+  Office:    ['office','boss','secretary','workplace','business','heels'],
+  Amateur:   ['amateur','homemade','real','couple','authentic','voyeur'],
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -239,7 +239,7 @@ function slugify(t) {
 function detectCategory(tags, title) {
   const s = (tags.join(' ') + ' ' + title).toLowerCase();
   for (const { keys, cat } of CATEGORY_MAP) if (keys.some(k => s.includes(k))) return cat;
-  return 'amateur';
+  return 'Amateur';
 }
 function extractVideoId(url) {
   const m = url.match(/\/video\.([a-z0-9]+)\//i);
