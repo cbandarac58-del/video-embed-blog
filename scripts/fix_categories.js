@@ -11,9 +11,9 @@ const CATEGORY_MAP = {
   'step sister': 'Stepsister',
   'step-sister': 'Stepsister',
   'milf': 'MILF',
-  'stepmom': 'MILF',
-  'step mom': 'MILF',
-  'step-mom': 'MILF',
+  'stepmom': 'Step Mom',
+  'step mom': 'Step Mom',
+  'step-mom': 'Step Mom',
   'latina': 'Latina',
   'lesbian': 'Lesbian',
   'anal': 'Anal',
@@ -54,7 +54,14 @@ function main() {
   db.forEach(video => {
     const orig = video.category || '';
     const cleanKey = orig.trim().toLowerCase();
-    const mapped = CATEGORY_MAP[cleanKey] || orig;
+    let mapped = CATEGORY_MAP[cleanKey] || orig;
+    
+    // Smart rule: if video is classified as MILF or Amateur, but the title contains Stepmom keywords, reclassify to "Step Mom"
+    const titleLower = (video.title || '').toLowerCase();
+    const isStepMom = titleLower.includes('stepmom') || titleLower.includes('step mom') || titleLower.includes('step-mom') || titleLower.includes('stepmother');
+    if ((mapped === 'MILF' || mapped === 'Amateur') && isStepMom) {
+      mapped = 'Step Mom';
+    }
     
     if (video.category !== mapped) {
       video.category = mapped;

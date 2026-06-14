@@ -63,7 +63,8 @@ const EXCLUDE_TAGS = new Set([
 const CATEGORY_MAP = [
   { keys: ['indian','desi','hindi','jiju','saali','bhabhi','malkin','devar','debar','nokar','punjabi','bengali','tamil','telugu'], cat: 'Indian' },
   { keys: ['stepsister','step-sister','stepsis','stepsiblings','stepdaughter','step-daughter'], cat: 'Stepsister' },
-  { keys: ['stepmom','step-mom','milf','mature','stepmother','cougar','stepaunt'], cat: 'MILF' },
+  { keys: ['stepmom','step-mom'], cat: 'Step Mom' },
+{ keys: ['milf','mature','stepmother','cougar','stepaunt'], cat: 'MILF' },
   { keys: ['latina','colombia','venezolana','spanish','mexican','peru','argentina'], cat: 'Latina' },
   { keys: ['lesbian','girlsway','girl-on-girl'], cat: 'Lesbian' },
   { keys: ['anal','ass-fuck','anal-sex','analed','butt-fuck'], cat: 'Anal' },
