@@ -8,48 +8,33 @@ export const onRequest = defineMiddleware(async (context, next) => {
   const pathname = url.pathname;
   const method = context.request.method;
 
-  // 1. Skip challenge for asset files, static assets, APIs, and non-GET requests
+  // 1. Skip for assets, API routes, and non-GET requests
   const hasExtension = /\.[a-zA-Z0-9]{2,4}$/.test(pathname);
   const isAssetOrApi = hasExtension ||
                        pathname.startsWith('/_astro/') ||
                        pathname.startsWith('/_image/') ||
-                       pathname.startsWith('/api/');
+                       pathname.startsWith('/api/') ||
+                       pathname === '/vxt-verify';   // never challenge the verify endpoint itself
 
   if (method !== 'GET' || isAssetOrApi) {
     return next();
   }
 
-  // 2. Skip challenge for known search engine crawlers to maintain SEO indexing
+  // 2. Let legitimate search engine crawlers through (SEO)
   const userAgent = context.request.headers.get('user-agent') ?? '';
   const isSearchCrawler = /googlebot|bingbot|yandexbot|duckduckbot|baiduspider|sogou|exabot|facebot|facebookexternalhit|ia_archiver/i.test(userAgent);
   if (isSearchCrawler) {
     return next();
   }
 
-  // 3. Check if user has already passed the bot challenge
+  // 3. Cookie check — cookie is ALWAYS set server-side by /vxt-verify
   const rawCookie = context.request.headers.get('cookie') ?? '';
   const isHuman = rawCookie.includes('vxt_human=1');
 
-  // 4. vxt_bust redirect handler:
-  //    After the JS challenge sets the cookie, the client does a hard navigation
-  //    to ?vxt_bust=<timestamp> to bypass Edge cache. Here we detect that param,
-  //    confirm the cookie is present, then 302-redirect to the clean URL.
-  //    Vercel Edge never caches 302 responses, so this reliably breaks the loop.
-  const hasBust = url.searchParams.has('vxt_bust');
-  if (hasBust && isHuman) {
-    url.searchParams.delete('vxt_bust');
-    const cleanUrl = url.pathname + (url.searchParams.toString() ? '?' + url.searchParams.toString() : '');
-    return new Response(null, {
-      status: 302,
-      headers: {
-        'Location': cleanUrl,
-        'Cache-Control': 'no-store',
-      },
-    });
-  }
-
-  // 5. Serve the JS challenge to unverified visitors
   if (!isHuman) {
+    // Build the destination path the user originally wanted
+    const encodedNext = encodeURIComponent(pathname + (url.search || ''));
+
     const challengeHtml = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -66,12 +51,10 @@ export const onRequest = defineMiddleware(async (context, next) => {
       color: #f8fafc;
       font-family: 'Outfit', sans-serif;
       display: flex;
-      flex-direction: column;
       align-items: center;
       justify-content: center;
       height: 100vh;
       margin: 0;
-      overflow: hidden;
     }
     .container {
       text-align: center;
@@ -82,54 +65,35 @@ export const onRequest = defineMiddleware(async (context, next) => {
       border: 1px solid rgba(244, 63, 94, 0.15);
       border-radius: 24px;
       backdrop-filter: blur(12px);
-      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.6);
     }
     .logo-box {
       display: inline-flex;
-      height: 56px;
-      width: 56px;
-      align-items: center;
-      justify-content: center;
+      height: 56px; width: 56px;
+      align-items: center; justify-content: center;
       border-radius: 16px;
       background: linear-gradient(135deg, #f43f5e, #f59e0b);
-      font-weight: 800;
-      font-size: 28px;
-      color: white;
+      font-weight: 800; font-size: 28px; color: white;
       margin-bottom: 20px;
-      box-shadow: 0 10px 25px -3px rgba(244, 63, 94, 0.4);
+      box-shadow: 0 10px 25px -3px rgba(244,63,94,0.4);
     }
     .spinner {
-      width: 44px;
-      height: 44px;
-      border: 4px solid rgba(244, 63, 94, 0.15);
+      width: 44px; height: 44px;
+      border: 4px solid rgba(244,63,94,0.15);
       border-left-color: #f43f5e;
       border-radius: 50%;
       animation: spin 0.9s linear infinite;
       margin: 22px auto;
     }
-    @keyframes spin {
-      0%   { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
+    @keyframes spin { to { transform: rotate(360deg); } }
     h1 {
-      font-size: 22px;
-      font-weight: 800;
-      margin: 8px 0 0;
-      background: linear-gradient(to right, #ffffff, #cbd5e1);
+      font-size: 22px; font-weight: 800; margin: 8px 0 0;
+      background: linear-gradient(to right, #fff, #cbd5e1);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
-    #msg {
-      color: #94a3b8;
-      font-size: 14px;
-      line-height: 1.6;
-      margin-top: 14px;
-    }
-    .footer-note {
-      font-size: 11px;
-      color: #475569;
-      margin-top: 22px;
-    }
+    #msg { color: #94a3b8; font-size: 14px; line-height: 1.6; margin-top: 14px; }
+    .footer-note { font-size: 11px; color: #475569; margin-top: 22px; }
   </style>
 </head>
 <body>
@@ -140,26 +104,24 @@ export const onRequest = defineMiddleware(async (context, next) => {
     <p id="msg">Please wait while we secure your connection to VixTube...</p>
     <div class="footer-note" id="footer">This process is automatic. Your browser will redirect shortly.</div>
   </div>
-
   <script>
     (function () {
-      var msgEl   = document.getElementById('msg');
+      var VERIFY_URL = '/vxt-verify?next=${encodedNext}';
       var spinner = document.getElementById('spinner');
       var footer  = document.getElementById('footer');
+      var msgEl   = document.getElementById('msg');
       var isBot   = false;
 
-      // 1. WebDriver flag — set by Selenium / Puppeteer / Playwright
-      if (navigator.webdriver) { isBot = true; }
+      // 1. WebDriver flag (Selenium / Puppeteer / Playwright set this to true)
+      if (navigator.webdriver) isBot = true;
 
-      // 2. Known headless User-Agent strings
+      // 2. Known headless UA strings
       var ua = navigator.userAgent.toLowerCase();
-      ['headlesschrome', 'selenium', 'puppeteer', 'playwright', 'phantomjs', 'jsdom']
-        .forEach(function (sig) { if (ua.indexOf(sig) > -1) isBot = true; });
+      ['headlesschrome','selenium','puppeteer','playwright','phantomjs','jsdom']
+        .forEach(function(s){ if (ua.indexOf(s) > -1) isBot = true; });
 
-      // 3. Chrome with empty language list → headless indicator
-      if (window.chrome && (!navigator.languages || navigator.languages.length === 0)) {
-        isBot = true;
-      }
+      // 3. Chrome with no language list = headless indicator
+      if (window.chrome && (!navigator.languages || !navigator.languages.length)) isBot = true;
 
       if (isBot) {
         if (spinner) spinner.style.display = 'none';
@@ -170,17 +132,11 @@ export const onRequest = defineMiddleware(async (context, next) => {
         return;
       }
 
-      // Human verified.
-      // Set the cookie first, then do a HARD navigation (not reload) with a
-      // cache-busting query param. The server middleware sees the cookie on this
-      // fresh request and issues a 302 to the clean URL — bypassing Edge cache.
+      // Human passed — navigate to the server-side verify endpoint.
+      // The server sets the cookie and 302-redirects to the original page.
+      // No client-side cookie setting needed at all.
       setTimeout(function () {
-        var cookie = 'vxt_human=1; Path=/; Max-Age=86400; SameSite=Lax';
-        if (location.protocol === 'https:') cookie += '; Secure';
-        document.cookie = cookie;
-
-        var sep = location.search ? '&' : '?';
-        location.href = location.pathname + location.search + sep + 'vxt_bust=' + Date.now();
+        location.href = VERIFY_URL;
       }, 1000);
     })();
   </script>
@@ -199,7 +155,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
     });
   }
 
-  // 6. Verified human — render the real page
+  // 4. Verified human — serve the real page
   const response = await next();
 
   // Country-based adult content blocking for video pages
