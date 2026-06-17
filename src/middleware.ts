@@ -10,8 +10,8 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
   // 1. Skip challenge for asset files, static assets, APIs, and non-GET requests
   const hasExtension = /\.[a-zA-Z0-9]{2,4}$/.test(pathname);
-  const isAssetOrApi = hasExtension || 
-                       pathname.startsWith('/_astro/') || 
+  const isAssetOrApi = hasExtension ||
+                       pathname.startsWith('/_astro/') ||
                        pathname.startsWith('/_image/') ||
                        pathname.startsWith('/api/');
 
@@ -26,12 +26,30 @@ export const onRequest = defineMiddleware(async (context, next) => {
     return next();
   }
 
-  // 3. Check if user has already passed the bot challenge (using both Astro cookie helper and raw header)
-  const isHuman = context.cookies.get('vxt_human')?.value === '1' || 
-                  (context.request.headers.get('cookie') ?? '').includes('vxt_human=1');
+  // 3. Check if user has already passed the bot challenge
+  const rawCookie = context.request.headers.get('cookie') ?? '';
+  const isHuman = rawCookie.includes('vxt_human=1');
 
+  // 4. vxt_bust redirect handler:
+  //    After the JS challenge sets the cookie, the client does a hard navigation
+  //    to ?vxt_bust=<timestamp> to bypass Edge cache. Here we detect that param,
+  //    confirm the cookie is present, then 302-redirect to the clean URL.
+  //    Vercel Edge never caches 302 responses, so this reliably breaks the loop.
+  const hasBust = url.searchParams.has('vxt_bust');
+  if (hasBust && isHuman) {
+    url.searchParams.delete('vxt_bust');
+    const cleanUrl = url.pathname + (url.searchParams.toString() ? '?' + url.searchParams.toString() : '');
+    return new Response(null, {
+      status: 302,
+      headers: {
+        'Location': cleanUrl,
+        'Cache-Control': 'no-store',
+      },
+    });
+  }
+
+  // 5. Serve the JS challenge to unverified visitors
   if (!isHuman) {
-    // Return the silent JS challenge HTML response
     const challengeHtml = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -42,9 +60,10 @@ export const onRequest = defineMiddleware(async (context, next) => {
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&display=swap" rel="stylesheet" />
   <style>
+    *, *::before, *::after { box-sizing: border-box; }
     body {
-      background-color: #020617; /* slate-950 */
-      color: #f8fafc; /* slate-50 */
+      background-color: #020617;
+      color: #f8fafc;
       font-family: 'Outfit', sans-serif;
       display: flex;
       flex-direction: column;
@@ -57,58 +76,59 @@ export const onRequest = defineMiddleware(async (context, next) => {
     .container {
       text-align: center;
       max-width: 420px;
-      padding: 30px;
-      background: rgba(15, 23, 42, 0.6); /* slate-900 with opacity */
-      border: 1px solid rgba(244, 63, 94, 0.15); /* rose-500/15 border */
+      width: 90%;
+      padding: 36px 30px;
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid rgba(244, 63, 94, 0.15);
       border-radius: 24px;
       backdrop-filter: blur(12px);
-      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
     }
     .logo-box {
       display: inline-flex;
-      height: 52px;
-      width: 52px;
+      height: 56px;
+      width: 56px;
       align-items: center;
       justify-content: center;
-      border-radius: 14px;
-      background: linear-gradient(135deg, #f43f5e, #f59e0b); /* rose-500 to amber-500 */
+      border-radius: 16px;
+      background: linear-gradient(135deg, #f43f5e, #f59e0b);
       font-weight: 800;
-      font-size: 26px;
+      font-size: 28px;
       color: white;
-      margin-bottom: 24px;
-      box-shadow: 0 10px 20px -3px rgba(244, 63, 94, 0.4);
+      margin-bottom: 20px;
+      box-shadow: 0 10px 25px -3px rgba(244, 63, 94, 0.4);
     }
     .spinner {
       width: 44px;
       height: 44px;
-      border: 4px solid rgba(244, 63, 94, 0.1);
+      border: 4px solid rgba(244, 63, 94, 0.15);
       border-left-color: #f43f5e;
       border-radius: 50%;
-      animation: spin 1s linear infinite;
-      margin: 24px auto;
+      animation: spin 0.9s linear infinite;
+      margin: 22px auto;
     }
     @keyframes spin {
-      0% { transform: rotate(0deg); }
+      0%   { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
     }
     h1 {
       font-size: 22px;
       font-weight: 800;
-      margin: 10px 0;
+      margin: 8px 0 0;
       background: linear-gradient(to right, #ffffff, #cbd5e1);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
-    p {
-      color: #94a3b8; /* slate-400 */
+    #msg {
+      color: #94a3b8;
       font-size: 14px;
       line-height: 1.6;
-      margin-top: 12px;
+      margin-top: 14px;
     }
     .footer-note {
       font-size: 11px;
-      color: #64748b;
-      margin-top: 24px;
+      color: #475569;
+      margin-top: 22px;
     }
   </style>
 </head>
@@ -116,69 +136,52 @@ export const onRequest = defineMiddleware(async (context, next) => {
   <div class="container">
     <div class="logo-box">V</div>
     <h1>Checking your browser</h1>
-    <div class="spinner"></div>
+    <div class="spinner" id="spinner"></div>
     <p id="msg">Please wait while we secure your connection to VixTube...</p>
-    <div class="footer-note">This process is automatic. Your browser will redirect shortly.</div>
+    <div class="footer-note" id="footer">This process is automatic. Your browser will redirect shortly.</div>
   </div>
-  <script>
-    (function() {
-      console.log("VixTube Security: Running browser verification...");
-      var msgEl = document.getElementById('msg');
 
-      // Cache-busting check: if cookie already exists in browser, bypass cache
-      if (document.cookie.indexOf('vxt_human=1') > -1) {
-        console.log("Verification already passed. Bypassing cache...");
-        var sep = window.location.href.indexOf('?') > -1 ? '&' : '?';
-        window.location.href = window.location.href + sep + "vxt_bust=" + Date.now();
-        return;
-      }
-      
-      var isBot = false;
-      
-      // 1. Basic Automated WebDriver check
-      if (navigator.webdriver) {
-        console.log("Verification failed: Webdriver detected.");
+  <script>
+    (function () {
+      var msgEl   = document.getElementById('msg');
+      var spinner = document.getElementById('spinner');
+      var footer  = document.getElementById('footer');
+      var isBot   = false;
+
+      // 1. WebDriver flag — set by Selenium / Puppeteer / Playwright
+      if (navigator.webdriver) { isBot = true; }
+
+      // 2. Known headless User-Agent strings
+      var ua = navigator.userAgent.toLowerCase();
+      ['headlesschrome', 'selenium', 'puppeteer', 'playwright', 'phantomjs', 'jsdom']
+        .forEach(function (sig) { if (ua.indexOf(sig) > -1) isBot = true; });
+
+      // 3. Chrome with empty language list → headless indicator
+      if (window.chrome && (!navigator.languages || navigator.languages.length === 0)) {
         isBot = true;
       }
-      
-      // 2. User Agent Check for headless tools
-      var ua = navigator.userAgent.toLowerCase();
-      var botUas = ['headlesschrome', 'selenium', 'puppeteer', 'playwright', 'phantomjs', 'jsdom'];
-      for (var i = 0; i < botUas.length; i++) {
-        if (ua.indexOf(botUas[i]) > -1) {
-          console.log("Verification failed: Bot User-Agent (" + botUas[i] + ").");
-          isBot = true;
-        }
-      }
-      
-      // 3. Platform & languages validation
-      if (window.chrome) {
-        if (!navigator.languages || navigator.languages.length === 0) {
-          console.log("Verification failed: Language preferences anomaly.");
-          isBot = true;
-        }
+
+      if (isBot) {
+        if (spinner) spinner.style.display = 'none';
+        if (footer)  footer.style.display  = 'none';
+        if (msgEl)   msgEl.innerHTML =
+          "<span style='color:#ef4444;font-weight:700'>Access Denied.</span>" +
+          "<br>Automated requests are not allowed on VixTube.";
+        return;
       }
 
-      if (!isBot) {
-        console.log("Verification passed. Setting cookie and reloading...");
-        setTimeout(function() {
-          var secureCookie = "vxt_human=1; Path=/; Max-Age=86400; SameSite=Lax";
-          if (window.location.protocol === 'https:') {
-            secureCookie += "; Secure";
-          }
-          document.cookie = secureCookie;
-          window.location.reload();
-        }, 1000);
-      } else {
-        console.log("Verification failed: Bot signature matched.");
-        if (msgEl) {
-          msgEl.innerHTML = "<span style='color: #ef4444; font-weight: bold;'>Access Denied.</span><br/>Automated requests are blocked on VixTube.";
-        }
-        var spinner = document.querySelector('.spinner');
-        if (spinner) spinner.style.display = 'none';
-        var footer = document.querySelector('.footer-note');
-        if (footer) footer.style.display = 'none';
-      }
+      // Human verified.
+      // Set the cookie first, then do a HARD navigation (not reload) with a
+      // cache-busting query param. The server middleware sees the cookie on this
+      // fresh request and issues a 302 to the clean URL — bypassing Edge cache.
+      setTimeout(function () {
+        var cookie = 'vxt_human=1; Path=/; Max-Age=86400; SameSite=Lax';
+        if (location.protocol === 'https:') cookie += '; Secure';
+        document.cookie = cookie;
+
+        var sep = location.search ? '&' : '?';
+        location.href = location.pathname + location.search + sep + 'vxt_bust=' + Date.now();
+      }, 1000);
     })();
   </script>
 </body>
@@ -196,22 +199,16 @@ export const onRequest = defineMiddleware(async (context, next) => {
     });
   }
 
-  // 4. Run the original response generation for verified humans
+  // 6. Verified human — render the real page
   const response = await next();
 
-  // Keep country-based blocking logic if needed
-  if (context.url.pathname.startsWith('/videos/')) {
+  // Country-based adult content blocking for video pages
+  if (pathname.startsWith('/videos/')) {
     const country = context.request.headers.get('x-vercel-ip-country') ?? '';
     if (BLOCKED_COUNTRIES.includes(country.toUpperCase())) {
-      response.headers.append(
-        'Set-Cookie',
-        'vxt_blocked=1; Path=/; Max-Age=300; SameSite=Lax'
-      );
+      response.headers.append('Set-Cookie', 'vxt_blocked=1; Path=/; Max-Age=300; SameSite=Lax');
     } else {
-      response.headers.append(
-        'Set-Cookie',
-        'vxt_blocked=0; Path=/; Max-Age=0; SameSite=Lax'
-      );
+      response.headers.append('Set-Cookie', 'vxt_blocked=0; Path=/; Max-Age=0; SameSite=Lax');
     }
   }
 
