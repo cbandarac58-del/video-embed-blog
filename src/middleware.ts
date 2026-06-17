@@ -13,29 +13,72 @@ export const onRequest = defineMiddleware(async (context, next) => {
   const isAssetOrApi = hasExtension ||
                        pathname.startsWith('/_astro/') ||
                        pathname.startsWith('/_image/') ||
-                       pathname.startsWith('/api/') ||
-                       pathname === '/vxt-verify';   // never challenge the verify endpoint itself
+                       pathname.startsWith('/api/');
 
   if (method !== 'GET' || isAssetOrApi) {
     return next();
   }
 
-  // 2. Let legitimate search engine crawlers through (SEO)
+  // 2. Let legitimate search engine crawlers through (preserves SEO)
   const userAgent = context.request.headers.get('user-agent') ?? '';
   const isSearchCrawler = /googlebot|bingbot|yandexbot|duckduckbot|baiduspider|sogou|exabot|facebot|facebookexternalhit|ia_archiver/i.test(userAgent);
   if (isSearchCrawler) {
     return next();
   }
 
-  // 3. Cookie check — cookie is ALWAYS set server-side by /vxt-verify
+  // 3. Check if user is already verified
   const rawCookie = context.request.headers.get('cookie') ?? '';
   const isHuman = rawCookie.includes('vxt_human=1');
 
-  if (!isHuman) {
-    // Build the destination path the user originally wanted
-    const encodedNext = encodeURIComponent(pathname + (url.search || ''));
+  // 4. Handle vxt_bust verification callback.
+  //    When the challenge JS passes, it navigates here with ?vxt_bust=<timestamp>.
+  //    The middleware (not JS) sets the cookie server-side and 302s to the clean URL.
+  //    This is fully reliable: no client-side cookie setting, no Edge cache issues.
+  const bustParam = url.searchParams.get('vxt_bust');
+  if (bustParam && !isHuman) {
+    const bustTs = parseInt(bustParam, 10);
+    const isRecentBust = !isNaN(bustTs) && (Date.now() - bustTs) < 30000; // within 30s
 
-    const challengeHtml = `<!DOCTYPE html>
+    if (isRecentBust) {
+      // Strip vxt_bust and any other internal params
+      url.searchParams.delete('vxt_bust');
+      const cleanUrl = url.pathname + (url.searchParams.toString() ? '?' + url.searchParams.toString() : '');
+      const isHttps = url.protocol === 'https:';
+      const cookieValue = `vxt_human=1; Path=/; Max-Age=86400; SameSite=Lax${isHttps ? '; Secure' : ''}`;
+
+      // Server sets cookie → browser will include it in the redirect follow-up request
+      return new Response(null, {
+        status: 302,
+        headers: {
+          'Location': cleanUrl,
+          'Set-Cookie': cookieValue,
+          'Cache-Control': 'no-store',
+        },
+      });
+    }
+  }
+
+  // 5. Verified human — serve the real page
+  if (isHuman) {
+    const response = await next();
+
+    // Country-based blocking for video pages
+    if (pathname.startsWith('/videos/')) {
+      const country = context.request.headers.get('x-vercel-ip-country') ?? '';
+      if (BLOCKED_COUNTRIES.includes(country.toUpperCase())) {
+        response.headers.append('Set-Cookie', 'vxt_blocked=1; Path=/; Max-Age=300; SameSite=Lax');
+      } else {
+        response.headers.append('Set-Cookie', 'vxt_blocked=0; Path=/; Max-Age=0; SameSite=Lax');
+      }
+    }
+
+    return response;
+  }
+
+  // 6. Unverified visitor — serve the JS challenge page
+  const destPath = encodeURIComponent(pathname + (url.search || ''));
+
+  const challengeHtml = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -106,21 +149,23 @@ export const onRequest = defineMiddleware(async (context, next) => {
   </div>
   <script>
     (function () {
-      var VERIFY_URL = '/vxt-verify?next=${encodedNext}';
+      // The original destination — server-injected, no client cookie needed
+      var dest = decodeURIComponent('${destPath}');
+
       var spinner = document.getElementById('spinner');
       var footer  = document.getElementById('footer');
       var msgEl   = document.getElementById('msg');
       var isBot   = false;
 
-      // 1. WebDriver flag (Selenium / Puppeteer / Playwright set this to true)
+      // 1. WebDriver flag (Selenium / Puppeteer / Playwright set this)
       if (navigator.webdriver) isBot = true;
 
-      // 2. Known headless UA strings
+      // 2. Known headless browser UA signatures
       var ua = navigator.userAgent.toLowerCase();
       ['headlesschrome','selenium','puppeteer','playwright','phantomjs','jsdom']
-        .forEach(function(s){ if (ua.indexOf(s) > -1) isBot = true; });
+        .forEach(function (s) { if (ua.indexOf(s) > -1) isBot = true; });
 
-      // 3. Chrome with no language list = headless indicator
+      // 3. Chrome with empty language array = headless indicator
       if (window.chrome && (!navigator.languages || !navigator.languages.length)) isBot = true;
 
       if (isBot) {
@@ -132,41 +177,27 @@ export const onRequest = defineMiddleware(async (context, next) => {
         return;
       }
 
-      // Human passed — navigate to the server-side verify endpoint.
-      // The server sets the cookie and 302-redirects to the original page.
-      // No client-side cookie setting needed at all.
+      // Human verified.
+      // Navigate with ?vxt_bust=<timestamp>. The SERVER-SIDE middleware intercepts
+      // this, sets Set-Cookie: vxt_human=1, and 302-redirects to the clean URL.
+      // No client-side cookie setting — eliminates all browser/edge caching issues.
       setTimeout(function () {
-        location.href = VERIFY_URL;
+        var sep = dest.indexOf('?') > -1 ? '&' : '?';
+        location.href = dest + sep + 'vxt_bust=' + Date.now();
       }, 1000);
     })();
   </script>
 </body>
 </html>`;
 
-    return new Response(challengeHtml, {
-      status: 200,
-      headers: {
-        'Content-Type': 'text/html; charset=utf-8',
-        'Cache-Control': 'private, no-cache, no-store, must-revalidate, max-age=0',
-        'Pragma': 'no-cache',
-        'Expires': '0',
-        'Vary': 'Cookie',
-      },
-    });
-  }
-
-  // 4. Verified human — serve the real page
-  const response = await next();
-
-  // Country-based adult content blocking for video pages
-  if (pathname.startsWith('/videos/')) {
-    const country = context.request.headers.get('x-vercel-ip-country') ?? '';
-    if (BLOCKED_COUNTRIES.includes(country.toUpperCase())) {
-      response.headers.append('Set-Cookie', 'vxt_blocked=1; Path=/; Max-Age=300; SameSite=Lax');
-    } else {
-      response.headers.append('Set-Cookie', 'vxt_blocked=0; Path=/; Max-Age=0; SameSite=Lax');
-    }
-  }
-
-  return response;
+  return new Response(challengeHtml, {
+    status: 200,
+    headers: {
+      'Content-Type': 'text/html; charset=utf-8',
+      'Cache-Control': 'private, no-cache, no-store, must-revalidate, max-age=0',
+      'Pragma': 'no-cache',
+      'Expires': '0',
+      'Vary': 'Cookie',
+    },
+  });
 });
