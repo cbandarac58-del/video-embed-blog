@@ -26,9 +26,9 @@ export const onRequest = defineMiddleware(async (context, next) => {
     return next();
   }
 
-  // 3. Check if user has already passed the bot challenge
-  const cookieHeader = context.request.headers.get('cookie') ?? '';
-  const isHuman = cookieHeader.includes('vxt_human=1');
+  // 3. Check if user has already passed the bot challenge (using both Astro cookie helper and raw header)
+  const isHuman = context.cookies.get('vxt_human')?.value === '1' || 
+                  (context.request.headers.get('cookie') ?? '').includes('vxt_human=1');
 
   if (!isHuman) {
     // Return the silent JS challenge HTML response
@@ -122,11 +122,22 @@ export const onRequest = defineMiddleware(async (context, next) => {
   </div>
   <script>
     (function() {
-      var isBot = false;
+      console.log("VixTube Security: Running browser verification...");
       var msgEl = document.getElementById('msg');
+
+      // Cache-busting check: if cookie already exists in browser, bypass cache
+      if (document.cookie.indexOf('vxt_human=1') > -1) {
+        console.log("Verification already passed. Bypassing cache...");
+        var sep = window.location.href.indexOf('?') > -1 ? '&' : '?';
+        window.location.href = window.location.href + sep + "vxt_bust=" + Date.now();
+        return;
+      }
+      
+      var isBot = false;
       
       // 1. Basic Automated WebDriver check
       if (navigator.webdriver) {
+        console.log("Verification failed: Webdriver detected.");
         isBot = true;
       }
       
@@ -135,19 +146,21 @@ export const onRequest = defineMiddleware(async (context, next) => {
       var botUas = ['headlesschrome', 'selenium', 'puppeteer', 'playwright', 'phantomjs', 'jsdom'];
       for (var i = 0; i < botUas.length; i++) {
         if (ua.indexOf(botUas[i]) > -1) {
+          console.log("Verification failed: Bot User-Agent (" + botUas[i] + ").");
           isBot = true;
         }
       }
       
-      // 3. Platform & languages validation (headless browsers often miss these or have anomalies)
+      // 3. Platform & languages validation
       if (window.chrome) {
         if (!navigator.languages || navigator.languages.length === 0) {
+          console.log("Verification failed: Language preferences anomaly.");
           isBot = true;
         }
       }
 
       if (!isBot) {
-        // Human verified: Set secure cookie (valid for 24 hours) and reload
+        console.log("Verification passed. Setting cookie and reloading...");
         setTimeout(function() {
           var secureCookie = "vxt_human=1; Path=/; Max-Age=86400; SameSite=Lax";
           if (window.location.protocol === 'https:') {
@@ -157,7 +170,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
           window.location.reload();
         }, 1000);
       } else {
-        // Access Denied for bots
+        console.log("Verification failed: Bot signature matched.");
         if (msgEl) {
           msgEl.innerHTML = "<span style='color: #ef4444; font-weight: bold;'>Access Denied.</span><br/>Automated requests are blocked on VixTube.";
         }
@@ -175,7 +188,10 @@ export const onRequest = defineMiddleware(async (context, next) => {
       status: 200,
       headers: {
         'Content-Type': 'text/html; charset=utf-8',
-        'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+        'Cache-Control': 'private, no-cache, no-store, must-revalidate, max-age=0',
+        'Pragma': 'no-cache',
+        'Expires': '0',
+        'Vary': 'Cookie',
       },
     });
   }
