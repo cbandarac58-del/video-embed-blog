@@ -7,7 +7,7 @@ import { fileURLToPath } from 'url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // ─── Config ───────────────────────────────────────────────────────────────────
-const TARGET_COUNT = 2000;    // How many new videos to add
+const TARGET_COUNT = 200;     // How many new videos to add
 const DELAY_MS     = 700;     // Polite delay between requests (ms)
 const CATEGORY     = 'Threesome';
 const START_PAGE   = 0;       // XVideos pagination starts at 0
