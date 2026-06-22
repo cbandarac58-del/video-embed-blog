@@ -11,8 +11,8 @@ export const onRequest = defineMiddleware(async (context, next) => {
     return response;
   }
 
-  // Cloudflare and Vercel inject the visitor's country as request headers
-  const country = context.request.headers.get('cf-ipcountry') ?? context.request.headers.get('x-vercel-ip-country') ?? '';
+  // Netlify, Cloudflare and Vercel inject the visitor's country as request headers
+  const country = context.request.headers.get('x-nf-country') ?? context.request.headers.get('cf-ipcountry') ?? context.request.headers.get('x-vercel-ip-country') ?? '';
 
   if (BLOCKED_COUNTRIES.includes(country.toUpperCase())) {
     // Set a short-lived cookie that the client JS reads to show the banner
