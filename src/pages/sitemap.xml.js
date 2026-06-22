@@ -1,11 +1,8 @@
-import fs from 'fs';
-import path from 'path';
+import { getCollection } from 'astro:content';
 
 export async function GET() {
-  // Read our centralized database.json
-  const jsonPath = path.resolve('src/content/videos/database.json');
-  const fileData = fs.readFileSync(jsonPath, 'utf-8');
-  const videos = JSON.parse(fileData);
+  // Read our collection from content layer
+  const videos = await getCollection('videos');
 
   // Helper to slugify consistently
   const slugify = (text) => 
@@ -17,12 +14,12 @@ export async function GET() {
       .replace(/-+$/, '');
 
   // Extract unique categories
-  const categories = [...new Set(videos.map(v => v.category))].filter(Boolean);
+  const categories = [...new Set(videos.map(v => v.data.category))].filter(Boolean);
 
   // Extract unique tags
   const tagsSet = new Set();
   videos.forEach(v => {
-    (v.tags || []).forEach(tag => {
+    (v.data.tags || []).forEach(tag => {
       const tagClean = tag.trim();
       if (tagClean) {
         tagsSet.add(slugify(tagClean));
@@ -94,7 +91,7 @@ export async function GET() {
   <!-- Individual Video Pages -->
   ${videos.map((video) => `
   <url>
-    <loc>https://vixtube.net/videos/${video.slug}</loc>
+    <loc>https://vixtube.net/videos/${video.data.slug}</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>`).join('')}

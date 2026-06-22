@@ -1,10 +1,11 @@
 import { defineConfig } from 'astro/config';
-import vercel from '@astrojs/vercel';
+import cloudflare from '@astrojs/cloudflare';
 
 // https://astro.build/config
 export default defineConfig({
-  adapter: vercel({
-    edgeMiddleware: true,
+  output: 'server',
+  adapter: cloudflare({
+    imageService: 'passthrough',
   }),
   site: 'https://vixtube.net',
   prefetch: {
