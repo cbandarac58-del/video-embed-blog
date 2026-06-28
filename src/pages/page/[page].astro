@@ -5,28 +5,24 @@ import AdContainer from '../../components/AdContainer.astro';
 import VideoCard from '../../components/VideoCard.astro';
 
 export async function getStaticPaths() {
-  let videos = [];
-  try {
-    videos = await getCollection('videos');
-  } catch (e) {
-    console.log("No videos found.", e);
-  }
-
+  const { getCollection } = await import('astro:content');
+  const videos = await getCollection('videos');
   const VIDEOS_PER_PAGE = 40;
   const totalPages = Math.ceil(videos.length / VIDEOS_PER_PAGE);
-
-  return Array.from({ length: totalPages }, (_, i) => ({
-    params: { page: String(i + 1) },
-    props: { currentPage: i + 1, totalPages, totalVideos: videos.length },
-  }));
+  const paths = [];
+  for (let p = 2; p <= totalPages; p++) {
+    paths.push({
+      params: { page: p.toString() }
+    });
+  }
+  return paths;
 }
 
-const { currentPage, totalPages, totalVideos } = Astro.props;
+const { page } = Astro.params;
+const currentPage = parseInt(page || '1', 10);
 
-// Get query parameters for filtering and sorting
-const url = new URL(Astro.request.url);
-const activeCategory = url.searchParams.get('category') || '';
-const sortBy = url.searchParams.get('sort') || 'dateAdded';
+const activeCategory = '';
+const sortBy = 'dateAdded';
 
 const VIDEOS_PER_PAGE = 40;
 
@@ -44,9 +40,6 @@ const allTags = [...new Set(videos.flatMap(v => v.data.tags))].filter(Boolean).s
 
 // Apply category filter
 let filteredVideos = [...videos];
-if (activeCategory) {
-  filteredVideos = filteredVideos.filter(v => v.data.category.toLowerCase() === activeCategory.toLowerCase());
-}
 
 // Parse views into numeric values for sorting
 function parseViews(v: string | number): number {
@@ -60,13 +53,7 @@ function parseViews(v: string | number): number {
 
 // Apply sorting
 filteredVideos.sort((a, b) => {
-  if (sortBy === 'views') {
-    return parseViews(b.data.views) - parseViews(a.data.views);
-  } else if (sortBy === 'rating') {
-    return (b.data.rating || 90) - (a.data.rating || 90);
-  } else {
-    return new Date(b.data.dateAdded).getTime() - new Date(a.data.dateAdded).getTime();
-  }
+  return new Date(b.data.dateAdded).getTime() - new Date(a.data.dateAdded).getTime();
 });
 
 // Paginate
@@ -96,12 +83,8 @@ function getCardGradient(slug: string) {
 
 // Build pagination URL helper
 function pageUrl(p: number) {
-  const params = new URLSearchParams();
-  if (activeCategory) params.set('category', activeCategory);
-  if (sortBy !== 'dateAdded') params.set('sort', sortBy);
-  const qs = params.toString();
-  if (p === 1) return `/${qs ? '?' + qs : ''}`;
-  return `/page/${p}${qs ? '?' + qs : ''}`;
+  if (p === 1) return '/';
+  return `/page/${p}`;
 }
 ---
 
@@ -150,9 +133,9 @@ function pageUrl(p: number) {
       <div class="flex items-center space-x-2">
         <span class="text-xs text-slate-500 font-medium">Sort By:</span>
         <div class="inline-flex rounded-lg bg-slate-900 p-0.5 border border-slate-800 text-xs">
-          <a href={pageUrl(currentPage) + (pageUrl(currentPage).includes('?') ? '&sort=dateAdded' : '?sort=dateAdded')} class={`rounded-md px-3 py-1 font-medium transition-colors ${sortBy === 'dateAdded' ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-slate-200'}`}>Recent</a>
-          <a href={pageUrl(currentPage) + (pageUrl(currentPage).includes('?') ? '&sort=views' : '?sort=views')} class={`rounded-md px-3 py-1 font-medium transition-colors ${sortBy === 'views' ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-slate-200'}`}>Most Viewed</a>
-          <a href={pageUrl(currentPage) + (pageUrl(currentPage).includes('?') ? '&sort=rating' : '?sort=rating')} class={`rounded-md px-3 py-1 font-medium transition-colors ${sortBy === 'rating' ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-slate-200'}`}>Top Rated</a>
+          <a href={currentPage === 1 ? '/' : `/page/${currentPage}`} class="rounded-md px-3 py-1 font-medium transition-colors bg-slate-800 text-white">Recent</a>
+          <a href={currentPage === 1 ? '/popular' : `/popular/${currentPage}`} class="rounded-md px-3 py-1 font-medium transition-colors text-slate-400 hover:text-slate-200">Most Viewed</a>
+          <a href={currentPage === 1 ? '/featured' : `/featured/${currentPage}`} class="rounded-md px-3 py-1 font-medium transition-colors text-slate-400 hover:text-slate-200">Top Rated</a>
         </div>
       </div>
     </div>

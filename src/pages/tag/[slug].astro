@@ -4,16 +4,32 @@ import Layout from '../../layouts/Layout.astro';
 import AdContainer from '../../components/AdContainer.astro';
 import VideoCard from '../../components/VideoCard.astro';
 
-export const prerender = false;
+export async function getStaticPaths() {
+  const allVideos = await getCollection('videos');
+  const slugify = (text: string) => 
+    text.toString().toLowerCase()
+      .replace(/\s+/g, '-')
+      .replace(/[^\w\-]+/g, '')
+      .replace(/\-\-+/g, '-')
+      .replace(/^-+/, '')
+      .replace(/-+$/, '');
+
+  const tagsSet = new Set<string>();
+  allVideos.forEach(v => {
+    (v.data.tags || []).forEach(tag => {
+      const tagClean = tag.trim();
+      if (tagClean) {
+        tagsSet.add(slugify(tagClean));
+      }
+    });
+  });
+  
+  return Array.from(tagsSet).map(tagSlug => ({
+    params: { slug: tagSlug }
+  }));
+}
 
 const { slug } = Astro.params;
-
-if (!slug) {
-  return new Response(null, {
-    status: 404,
-    statusText: 'Not found'
-  });
-}
 
 // Helper to slugify tag names consistently
 const slugify = (text: string) => 

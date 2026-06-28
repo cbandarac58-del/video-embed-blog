@@ -4,44 +4,51 @@ import Layout from '../../layouts/Layout.astro';
 import AdContainer from '../../components/AdContainer.astro';
 import VideoCard from '../../components/VideoCard.astro';
 
-const PER_PAGE = 40;
-
 export async function getStaticPaths() {
-  let videos = [];
-  try {
-    videos = await getCollection('videos');
-  } catch (e) {
-    console.log("No videos found", e);
-  }
-
+  const allVideos = await getCollection('videos');
   const slugify = (text: string) =>
     text.toString().toLowerCase()
       .replace(/\s+/g, '-').replace(/[^\w\-]+/g, '')
       .replace(/\-\-+/g, '-').replace(/^-+/, '').replace(/-+$/, '');
 
-  const categories = [...new Set(videos.map(v => v.data.category))].filter(Boolean).sort((a, b) => {
-    if (a === 'Indian') return -1;
-    if (b === 'Indian') return 1;
-    return a.localeCompare(b);
-  });
-  const PER = 40;
-
-  return categories.map(category => {
-    const slug = slugify(category);
-    const categoryVideos = videos
-      .filter(v => v.data.category === category)
-      .sort((a, b) => new Date(b.data.dateAdded).getTime() - new Date(a.data.dateAdded).getTime());
-    const totalPages = Math.ceil(categoryVideos.length / PER);
-    const pageVideos = categoryVideos.slice(0, PER);
-
-    return {
-      params: { slug },
-      props: { categoryName: category, videos: pageVideos, allCategories: categories, currentPage: 1, totalPages, totalVideos: categoryVideos.length, baseSlug: slug }
-    };
-  });
+  const allCategories = [...new Set(allVideos.map(v => v.data.category))].filter(Boolean);
+  return allCategories.map((category) => ({
+    params: { slug: slugify(category) },
+    props: { categoryName: category }
+  }));
 }
 
-const { categoryName, videos, allCategories, currentPage, totalPages, totalVideos, baseSlug } = Astro.props;
+const PER_PAGE = 40;
+const { slug } = Astro.params;
+const { categoryName } = Astro.props;
+
+let allVideos = [];
+try {
+  allVideos = await getCollection('videos');
+} catch (e) {
+  console.log("No videos found", e);
+}
+
+const slugify = (text: string) =>
+  text.toString().toLowerCase()
+    .replace(/\s+/g, '-').replace(/[^\w\-]+/g, '')
+    .replace(/\-\-+/g, '-').replace(/^-+/, '').replace(/-+$/, '');
+
+const allCategories = [...new Set(allVideos.map(v => v.data.category))].filter(Boolean).sort((a, b) => {
+  if (a === 'Indian') return -1;
+  if (b === 'Indian') return 1;
+  return a.localeCompare(b);
+});
+
+const categoryVideos = allVideos
+  .filter(v => v.data.category === categoryName)
+  .sort((a, b) => new Date(b.data.dateAdded).getTime() - new Date(a.data.dateAdded).getTime());
+
+const totalVideos = categoryVideos.length;
+const totalPages = Math.ceil(totalVideos / PER_PAGE);
+const videos = categoryVideos.slice(0, PER_PAGE);
+const currentPage = 1;
+const baseSlug = slug;
 
 function formatViews(val: string | number) {
   if (typeof val === 'string') return val;
@@ -58,11 +65,6 @@ function getCardGradient(videoSlug: string) {
   ];
   return gradients[hash % gradients.length];
 }
-
-const slugify = (text: string) =>
-  text.toString().toLowerCase()
-    .replace(/\s+/g, '-').replace(/[^\w\-]+/g, '')
-    .replace(/\-\-+/g, '-').replace(/^-+/, '').replace(/-+$/, '');
 
 const nextUrl = totalPages > 1 ? `/category/${baseSlug}/2` : null;
 ---

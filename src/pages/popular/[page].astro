@@ -4,51 +4,44 @@ import Layout from '../../layouts/Layout.astro';
 import AdContainer from '../../components/AdContainer.astro';
 import VideoCard from '../../components/VideoCard.astro';
 
-const PER_PAGE = 40;
-
 export async function getStaticPaths() {
+  const allVideos = await getCollection('videos');
   const PER_PAGE = 40;
-  let videos = [];
-  try {
-    videos = await getCollection('videos');
-  } catch (e) {
-    console.log("No videos found", e);
-  }
-
-  // Parse views count to sort
-  function parseViews(v: string | number): number {
-    if (typeof v === 'number') return v;
-    const clean = v.trim().toLowerCase();
-    const num = parseFloat(clean);
-    if (clean.includes('m')) return num * 1000000;
-    if (clean.includes('k')) return num * 1000;
-    return num || 0;
-  }
-
-  const popularVideos = [...videos].sort((a, b) => parseViews(b.data.views) - parseViews(a.data.views));
-  const totalPages = Math.ceil(popularVideos.length / PER_PAGE);
-  const categories = [...new Set(videos.map(v => v.data.category))].filter(Boolean);
-
+  const totalPages = Math.ceil(allVideos.length / PER_PAGE);
   const paths = [];
-  // Only generate pages 2+
-  for (let page = 2; page <= totalPages; page++) {
-    const pageVideos = popularVideos.slice((page - 1) * PER_PAGE, page * PER_PAGE);
+  for (let p = 2; p <= totalPages; p++) {
     paths.push({
-      params: { page: String(page) },
-      props: {
-        videos: pageVideos,
-        categories,
-        currentPage: page,
-        totalPages,
-        totalVideos: popularVideos.length,
-      }
+      params: { page: p.toString() }
     });
   }
-
   return paths;
 }
 
-const { videos: pagedVideos, categories, currentPage, totalPages, totalVideos } = Astro.props;
+const PER_PAGE = 40;
+const { page } = Astro.params;
+const currentPage = parseInt(page || '2', 10);
+
+let allVideos = [];
+try {
+  allVideos = await getCollection('videos');
+} catch (e) {
+  console.log("No videos found", e);
+}
+
+function parseViews(v: string | number): number {
+  if (typeof v === 'number') return v;
+  const clean = v.trim().toLowerCase();
+  const num = parseFloat(clean);
+  if (clean.includes('m')) return num * 1000000;
+  if (clean.includes('k')) return num * 1000;
+  return num || 0;
+}
+
+const popularVideos = [...allVideos].sort((a, b) => parseViews(b.data.views) - parseViews(a.data.views));
+const totalVideos = popularVideos.length;
+const totalPages = Math.ceil(totalVideos / PER_PAGE);
+const pagedVideos = popularVideos.slice((currentPage - 1) * PER_PAGE, currentPage * PER_PAGE);
+const categories = [...new Set(allVideos.map(v => v.data.category))].filter(Boolean);
 
 const slugify = (text: string) => 
   text.toString().toLowerCase()

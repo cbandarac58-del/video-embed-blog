@@ -4,59 +4,65 @@ import Layout from '../../../layouts/Layout.astro';
 import AdContainer from '../../../components/AdContainer.astro';
 import VideoCard from '../../../components/VideoCard.astro';
 
-const PER_PAGE = 40;
-
 export async function getStaticPaths() {
-  let videos = [];
-  try {
-    videos = await getCollection('videos');
-  } catch (e) {
-    console.log("No videos found", e);
-  }
-
+  const allVideos = await getCollection('videos');
   const slugify = (text: string) =>
     text.toString().toLowerCase()
       .replace(/\s+/g, '-').replace(/[^\w\-]+/g, '')
       .replace(/\-\-+/g, '-').replace(/^-+/, '').replace(/-+$/, '');
 
-  const categories = [...new Set(videos.map(v => v.data.category))].filter(Boolean).sort((a, b) => {
-    if (a === 'Indian') return -1;
-    if (b === 'Indian') return 1;
-    return a.localeCompare(b);
-  });
-  const PER = 40;
-  const paths: any[] = [];
-
-  for (const category of categories) {
-    const slug = slugify(category);
-    const categoryVideos = videos
-      .filter(v => v.data.category === category)
-      .sort((a, b) => new Date(b.data.dateAdded).getTime() - new Date(a.data.dateAdded).getTime());
-
-    const totalPages = Math.ceil(categoryVideos.length / PER);
-
-    // Only generate pages 2, 3, 4... (page 1 handled by [slug].astro)
-    for (let page = 2; page <= totalPages; page++) {
-      const pageVideos = categoryVideos.slice((page - 1) * PER, page * PER);
+  const allCategories = [...new Set(allVideos.map(v => v.data.category))].filter(Boolean);
+  
+  const paths = [];
+  const PER_PAGE = 40;
+  
+  for (const category of allCategories) {
+    const categoryVideos = allVideos.filter(v => v.data.category === category);
+    const totalVideos = categoryVideos.length;
+    const totalPages = Math.ceil(totalVideos / PER_PAGE);
+    
+    for (let p = 2; p <= totalPages; p++) {
       paths.push({
-        params: { slug, page: String(page) },
-        props: {
-          categoryName: category,
-          videos: pageVideos,
-          allCategories: categories,
-          currentPage: page,
-          totalPages,
-          totalVideos: categoryVideos.length,
-          baseSlug: slug,
-        }
+        params: { slug: slugify(category), page: p.toString() },
+        props: { categoryName: category }
       });
     }
   }
-
+  
   return paths;
 }
 
-const { categoryName, videos, allCategories, currentPage, totalPages, totalVideos, baseSlug } = Astro.props;
+const PER_PAGE = 40;
+const { slug, page } = Astro.params;
+const { categoryName } = Astro.props;
+const currentPage = parseInt(page || '2', 10);
+
+let allVideos = [];
+try {
+  allVideos = await getCollection('videos');
+} catch (e) {
+  console.log("No videos found", e);
+}
+
+const slugify = (text: string) =>
+  text.toString().toLowerCase()
+    .replace(/\s+/g, '-').replace(/[^\w\-]+/g, '')
+    .replace(/\-\-+/g, '-').replace(/^-+/, '').replace(/-+$/, '');
+
+const allCategories = [...new Set(allVideos.map(v => v.data.category))].filter(Boolean).sort((a, b) => {
+  if (a === 'Indian') return -1;
+  if (b === 'Indian') return 1;
+  return a.localeCompare(b);
+});
+
+const categoryVideos = allVideos
+  .filter(v => v.data.category === categoryName)
+  .sort((a, b) => new Date(b.data.dateAdded).getTime() - new Date(a.data.dateAdded).getTime());
+
+const totalVideos = categoryVideos.length;
+const totalPages = Math.ceil(totalVideos / PER_PAGE);
+const videos = categoryVideos.slice((currentPage - 1) * PER_PAGE, currentPage * PER_PAGE);
+const baseSlug = slug;
 
 function formatViews(val: string | number) {
   if (typeof val === 'string') return val;
@@ -64,11 +70,6 @@ function formatViews(val: string | number) {
   if (val >= 1000) return (val / 1000).toFixed(0) + 'K';
   return val.toString();
 }
-
-const slugify = (text: string) =>
-  text.toString().toLowerCase()
-    .replace(/\s+/g, '-').replace(/[^\w\-]+/g, '')
-    .replace(/\-\-+/g, '-').replace(/^-+/, '').replace(/-+$/, '');
 
 const prevUrl = currentPage === 2 ? `/category/${baseSlug}` : `/category/${baseSlug}/${currentPage - 1}`;
 const nextUrl = currentPage < totalPages ? `/category/${baseSlug}/${currentPage + 1}` : null;

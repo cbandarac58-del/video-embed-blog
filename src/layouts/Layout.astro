@@ -1,7 +1,6 @@
 ---
 import '../styles/global.css';
 import { getCollection } from 'astro:content';
-import Analytics from '@vercel/analytics/astro';
 
 interface Props {
   title: string;
@@ -149,7 +148,6 @@ videos.forEach(v => {
         });
       }
     </script>
-    <Analytics />
   </head>
   <body class="flex flex-col min-h-screen bg-slate-950 text-slate-100 selection:bg-rose-500 selection:text-white pb-16 md:pb-0">
     <!-- AdBlock Popunder Recovery + ExoClick Ad Providers -->

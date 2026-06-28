@@ -1,0 +1,202 @@
+---
+import { getCollection } from 'astro:content';
+import Layout from '../../layouts/Layout.astro';
+import AdContainer from '../../components/AdContainer.astro';
+import VideoCard from '../../components/VideoCard.astro';
+
+const PER_PAGE = 40;
+
+const { page } = Astro.params;
+const currentPage = parseInt(page || '2', 10);
+
+let allVideos = [];
+try {
+  allVideos = await getCollection('videos');
+} catch (e) {
+  console.log("No videos found", e);
+}
+
+function parseViews(v: string | number): number {
+  if (typeof v === 'number') return v;
+  const clean = v.trim().toLowerCase();
+  const num = parseFloat(clean);
+  if (clean.includes('m')) return num * 1000000;
+  if (clean.includes('k')) return num * 1000;
+  return num || 0;
+}
+
+const popularVideos = [...allVideos].sort((a, b) => parseViews(b.data.views) - parseViews(a.data.views));
+const totalVideos = popularVideos.length;
+const totalPages = Math.ceil(totalVideos / PER_PAGE);
+const pagedVideos = popularVideos.slice((currentPage - 1) * PER_PAGE, currentPage * PER_PAGE);
+const categories = [...new Set(allVideos.map(v => v.data.category))].filter(Boolean);
+
+const slugify = (text: string) => 
+  text.toString().toLowerCase()
+    .replace(/\s+/g, '-')
+    .replace(/[^\w\-]+/g, '')
+    .replace(/\-\-+/g, '-')
+    .replace(/^-+/, '')
+    .replace(/-+$/, '');
+
+function formatViews(val: string | number) {
+  if (typeof val === 'string') return val;
+  if (val >= 1000000) return (val / 1000000).toFixed(1) + 'M';
+  if (val >= 1000) return (val / 1000).toFixed(0) + 'K';
+  return val.toString();
+}
+
+function getCardGradient(videoSlug: string) {
+  const hash = videoSlug.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  const gradients = [
+    'from-rose-600/20 to-purple-600/10 hover:from-rose-500/30 hover:to-purple-500/20',
+    'from-purple-600/20 to-indigo-600/10 hover:from-purple-500/30 hover:to-indigo-500/20',
+    'from-pink-600/20 to-rose-600/10 hover:from-pink-500/30 hover:to-rose-500/20',
+    'from-indigo-600/20 to-violet-600/10 hover:from-indigo-500/30 hover:to-violet-500/20',
+    'from-amber-600/20 to-rose-600/10 hover:from-amber-500/30 hover:to-rose-500/20',
+  ];
+  return gradients[hash % gradients.length];
+}
+
+const prevUrl = currentPage === 2 ? `/popular` : `/popular/${currentPage - 1}`;
+const nextUrl = currentPage < totalPages ? `/popular/${currentPage + 1}` : null;
+
+// Page numbers to show
+const pageRange = Array.from({ length: totalPages }, (_, i) => i + 1).filter(p =>
+  p === 1 || p === totalPages || Math.abs(p - currentPage) <= 2
+);
+---
+
+<Layout 
+  title={`Popular Adult Videos & Most Viewed XXX Porn – Page ${currentPage} | VixTube Premium`}
+  description={`Watch the most popular adult videos, trending XXX clips, and hot amateur sex tapes online. Page ${currentPage} of ${totalPages}.`}
+>
+  <!-- Hero Banner -->
+  <section class="relative overflow-hidden bg-slate-950 py-12 border-b border-slate-900">
+    <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-rose-950/20 via-slate-950 to-slate-950"></div>
+    <div class="relative mx-auto max-w-7xl px-4 text-center sm:px-6 lg:px-8">
+      <h1 class="text-3xl font-extrabold tracking-tight text-white sm:text-5xl lg:text-6xl">
+        Most Popular <span class="bg-gradient-to-r from-rose-500 via-pink-500 to-amber-500 bg-clip-text text-transparent">Adult Videos</span>
+      </h1>
+      <p class="mx-auto mt-4 max-w-2xl text-sm sm:text-base text-slate-400">
+        {totalVideos} videos · Page {currentPage} of {totalPages}
+      </p>
+      
+      <AdContainer slotType="banner_728x90" className="hidden sm:flex" />
+      <AdContainer slotType="banner_468x60" className="flex sm:hidden" />
+    </div>
+  </section>
+
+  <!-- Filter & Listing Section -->
+  <section class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+    
+    <!-- Categories Selector -->
+    <div class="mb-6">
+      <h2 class="text-xs font-bold uppercase tracking-widest text-slate-500 mb-3">Categories</h2>
+      <div class="flex space-x-2 overflow-x-auto pb-2 scrollbar-none">
+        <a 
+          href="/" 
+          class="rounded-full px-4 py-1.5 text-xs font-semibold whitespace-nowrap border bg-slate-900 border-slate-800 text-slate-300 hover:border-slate-700 transition-all"
+        >
+          All Videos
+        </a>
+        {categories.map((cat) => (
+          <a 
+            href={`/category/${slugify(cat)}`}
+            class="rounded-full px-4 py-1.5 text-xs font-semibold whitespace-nowrap border bg-slate-900 border-slate-800 text-slate-300 hover:border-slate-700 transition-all"
+          >
+            {cat}
+          </a>
+        ))}
+      </div>
+    </div>
+
+    <!-- Active Filter Info -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between border-t border-slate-900 pt-6 mb-8 gap-4">
+      <div class="text-sm text-slate-400">
+        Showing: <span class="text-rose-400 font-medium">Most Popular Videos</span> 
+        <span class="text-xs text-slate-600 ml-1">({totalVideos} total · showing {pagedVideos.length})</span>
+      </div>
+      <div class="text-xs text-slate-500 font-medium">Page <span class="text-white font-bold">{currentPage}</span> / {totalPages}</div>
+
+      <!-- Sorting Controls -->
+      <div class="flex items-center space-x-2">
+        <span class="text-xs text-slate-500 font-medium">Sort By:</span>
+        <div class="inline-flex rounded-lg bg-slate-900 p-0.5 border border-slate-800 text-xs">
+          <a 
+            href="/"
+            class="rounded-md px-3 py-1 font-medium transition-colors text-slate-400 hover:text-slate-200"
+          >
+            Recent
+          </a>
+          <a 
+            href="/popular"
+            class="rounded-md px-3 py-1 font-medium transition-colors bg-slate-800 text-white"
+          >
+            Most Viewed
+          </a>
+          <a 
+            href="/featured"
+            class="rounded-md px-3 py-1 font-medium transition-colors text-slate-400 hover:text-slate-200"
+          >
+            Top Rated
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Video Grid -->
+    {pagedVideos.length === 0 ? (
+      <div class="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-800 py-20 text-center">
+        <h3 class="text-lg font-bold text-slate-200">No Videos Found</h3>
+      </div>
+    ) : (
+      <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+        {pagedVideos.map((video) => (
+          <VideoCard video={video} />
+        ))}
+      </div>
+    )}
+
+    <!-- Pagination -->
+    <div class="flex items-center justify-center gap-3 mt-12 pt-8 border-t border-slate-900">
+      <a href={prevUrl}
+        class="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm font-semibold text-slate-300 hover:bg-slate-800 hover:text-white hover:border-slate-700 transition-all">
+        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+        Previous
+      </a>
+
+      <div class="flex items-center gap-1">
+        {pageRange.map((p, idx) => {
+          const prev = pageRange[idx - 1];
+          const showDots = prev && p - prev > 1;
+          return (
+            <>
+              {showDots && <span class="text-slate-600 px-1">…</span>}
+              <a href={p === 1 ? `/popular` : `/popular/${p}`}
+                class={`w-9 h-9 flex items-center justify-center rounded-lg text-sm font-bold transition-all ${
+                  p === currentPage
+                    ? 'bg-rose-600 text-white border border-rose-500 shadow-lg shadow-rose-600/30'
+                    : 'bg-slate-900 border border-slate-800 text-slate-400 hover:bg-slate-800 hover:text-white'}`}>
+                {p}
+              </a>
+            </>
+          );
+        })}
+      </div>
+
+      {nextUrl ? (
+        <a href={nextUrl}
+          class="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-rose-600 border border-rose-500 text-sm font-semibold text-white hover:bg-rose-500 transition-all shadow-lg shadow-rose-600/20">
+          Next
+          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+        </a>
+      ) : (
+        <span class="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-900/40 border border-slate-900 text-sm font-semibold text-slate-700 cursor-not-allowed">
+          Next
+          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+        </span>
+      )}
+    </div>
+  </section>
+</Layout>

@@ -4,41 +4,35 @@ import Layout from '../../layouts/Layout.astro';
 import AdContainer from '../../components/AdContainer.astro';
 import VideoCard from '../../components/VideoCard.astro';
 
-const PER_PAGE = 40;
-
 export async function getStaticPaths() {
+  const allVideos = await getCollection('videos');
   const PER_PAGE = 40;
-  let videos = [];
-  try {
-    videos = await getCollection('videos');
-  } catch (e) {
-    console.log("No videos found", e);
-  }
-
-  const featuredVideos = [...videos].sort((a, b) => (b.data.rating || 90) - (a.data.rating || 90));
-  const totalPages = Math.ceil(featuredVideos.length / PER_PAGE);
-  const categories = [...new Set(videos.map(v => v.data.category))].filter(Boolean);
-
+  const totalPages = Math.ceil(allVideos.length / PER_PAGE);
   const paths = [];
-  // Only generate pages 2+
-  for (let page = 2; page <= totalPages; page++) {
-    const pageVideos = featuredVideos.slice((page - 1) * PER_PAGE, page * PER_PAGE);
+  for (let p = 2; p <= totalPages; p++) {
     paths.push({
-      params: { page: String(page) },
-      props: {
-        videos: pageVideos,
-        categories,
-        currentPage: page,
-        totalPages,
-        totalVideos: featuredVideos.length,
-      }
+      params: { page: p.toString() }
     });
   }
-
   return paths;
 }
 
-const { videos: pagedVideos, categories, currentPage, totalPages, totalVideos } = Astro.props;
+const PER_PAGE = 40;
+const { page } = Astro.params;
+const currentPage = parseInt(page || '2', 10);
+
+let allVideos = [];
+try {
+  allVideos = await getCollection('videos');
+} catch (e) {
+  console.log("No videos found", e);
+}
+
+const featuredVideos = [...allVideos].sort((a, b) => (b.data.rating || 90) - (a.data.rating || 90));
+const totalVideos = featuredVideos.length;
+const totalPages = Math.ceil(totalVideos / PER_PAGE);
+const pagedVideos = featuredVideos.slice((currentPage - 1) * PER_PAGE, currentPage * PER_PAGE);
+const categories = [...new Set(allVideos.map(v => v.data.category))].filter(Boolean);
 
 const slugify = (text: string) => 
   text.toString().toLowerCase()
