@@ -1,5 +1,5 @@
 # build output
-dist/
+# dist/   <-- removed so pre-built files can be committed
 .vercel/
 # generated types
 .astro/

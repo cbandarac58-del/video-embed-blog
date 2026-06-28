@@ -1,0 +1,267 @@
+import { n as getCollection, r as __exportAll } from "./_astro_content_CSD6qwR1.mjs";
+import { T as createComponent, a as renderComponent, f as renderTemplate, g as maybeRenderHead, v as addAttribute, w as createAstro } from "./server_DdnRNRi_.mjs";
+import { t as $$Layout } from "./Layout_CqI_4LJ3.mjs";
+import { t as $$VideoCard } from "./VideoCard_DnZh-vgx.mjs";
+import { t as $$AdContainer } from "./AdContainer_Cv_htVh8.mjs";
+//#region src/pages/index.astro
+var pages_exports = /* @__PURE__ */ __exportAll({
+	default: () => $$Index,
+	file: () => $$file,
+	url: () => ""
+});
+createAstro("https://vixtube.net");
+var $$Index = createComponent(async ($$result, $$props, $$slots) => {
+	const Astro = $$result.createAstro($$props, $$slots);
+	Astro.self = $$Index;
+	const url = new URL(Astro.request.url);
+	const activeCategory = url.searchParams.get("category") || "";
+	const activeTag = url.searchParams.get("tag") || "";
+	const searchQuery = url.searchParams.get("search") || "";
+	const sortBy = url.searchParams.get("sort") || "dateAdded";
+	const VIDEOS_PER_PAGE = 40;
+	let videos = [];
+	try {
+		videos = await getCollection("videos");
+	} catch (e) {
+		console.log("No videos found in content layer yet.", e);
+	}
+	const categories = [...new Set(videos.map((v) => v.data.category))].filter(Boolean).sort((a, b) => {
+		if (a === "Indian") return -1;
+		if (b === "Indian") return 1;
+		return a.localeCompare(b);
+	});
+	const allTags = [...new Set(videos.flatMap((v) => v.data.tags))].filter(Boolean).slice(0, 15);
+	let filteredVideos = [...videos];
+	if (activeCategory) filteredVideos = filteredVideos.filter((v) => v.data.category.toLowerCase() === activeCategory.toLowerCase());
+	if (activeTag) filteredVideos = filteredVideos.filter((v) => v.data.tags.some((t) => t.toLowerCase() === activeTag.toLowerCase()));
+	if (searchQuery) {
+		const query = searchQuery.toLowerCase();
+		filteredVideos = filteredVideos.filter((v) => v.data.title.toLowerCase().includes(query) || v.data.category.toLowerCase().includes(query) || v.data.tags.some((t) => t.toLowerCase().includes(query)));
+	}
+	function parseViews(v) {
+		if (typeof v === "number") return v;
+		const clean = v.trim().toLowerCase();
+		const num = parseFloat(clean);
+		if (clean.includes("m")) return num * 1e6;
+		if (clean.includes("k")) return num * 1e3;
+		return num || 0;
+	}
+	filteredVideos.sort((a, b) => {
+		if (sortBy === "views") return parseViews(b.data.views) - parseViews(a.data.views);
+		else if (sortBy === "rating") return b.data.rating - a.data.rating;
+		else return new Date(b.data.dateAdded).getTime() - new Date(a.data.dateAdded).getTime();
+	});
+	const totalVideos = filteredVideos.length;
+	const totalPages = Math.ceil(totalVideos / VIDEOS_PER_PAGE);
+	const pagedVideos = filteredVideos.slice(0, VIDEOS_PER_PAGE);
+	return renderTemplate`${renderComponent($$result, "Layout", $$Layout, { "title": "Watch Free Adult Videos, XXX Clips & Desi Porn" }, { "default": async ($$result) => renderTemplate`
+  
+  
+  ${maybeRenderHead($$result)}<section class="relative overflow-hidden bg-slate-950 py-12 border-b border-slate-900"><div class="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-rose-950/20 via-slate-950 to-slate-950"></div><div class="relative mx-auto max-w-7xl px-4 text-center sm:px-6 lg:px-8"><h1 class="text-3xl font-extrabold tracking-tight text-white sm:text-5xl lg:text-6xl">Watch Free HD <span class="bg-gradient-to-r from-rose-500 via-pink-500 to-amber-500 bg-clip-text text-transparent">Porn & XXX Videos</span></h1><p class="mx-auto mt-4 max-w-2xl text-sm sm:text-base text-slate-400">Discover the highest-rated amateur, desi bhabhi, stepsister, and hardcore streaming adult videos. Clean, responsive embeds optimized for all mobile devices.</p></div></section>
+
+  
+  <section class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8"><!-- Leaderboard Ad Banner -->${renderComponent($$result, "AdContainer", $$AdContainer, {
+		"slotType": "banner_728x90",
+		"className": "mb-6"
+	})}<!-- Mobile Categories Horizontal Scroll --><div class="mb-6"><h2 class="text-xs font-bold uppercase tracking-widest text-slate-500 mb-3">Categories</h2><div class="flex flex-wrap gap-2"><a href="/"${addAttribute(`rounded-full px-4 py-1.5 text-xs font-semibold whitespace-nowrap border transition-all ${!activeCategory ? "bg-rose-600 border-rose-500 text-white shadow-lg shadow-rose-600/20" : "bg-slate-900 border-slate-800 text-slate-300 hover:border-slate-700"}`, "class")}>All Videos</a>${categories.map((category) => {
+		return renderTemplate`<a${addAttribute(`/category/${category.toLowerCase().replace(/\s+/g, "-").replace(/[^\w\-]+/g, "").replace(/\-\-+/g, "-").replace(/^-+/, "").replace(/-+$/, "")}`, "href")} class="rounded-full px-4 py-1.5 text-xs font-semibold whitespace-nowrap border bg-slate-900 border-slate-800 text-slate-300 hover:border-slate-700 transition-all">${category}</a>`;
+	})}</div></div><!-- Active Filter Indicators & Sorting --><div class="flex flex-col sm:flex-row sm:items-center sm:justify-between border-t border-slate-900 pt-6 mb-8 gap-4"><!-- Filter status --><div id="filter-status-text" class="text-sm text-slate-400">${searchQuery ? renderTemplate`<span>Search results for "<span class="text-rose-400 font-medium">${searchQuery}</span>"</span>` : activeCategory ? renderTemplate`<span>Showing <span class="text-rose-400 font-medium">${activeCategory}</span> videos</span>` : activeTag ? renderTemplate`<span>Tagged with "<span class="text-rose-400 font-medium">${activeTag}</span>"</span>` : renderTemplate`<span>Showing <span class="text-rose-400 font-medium">All Trending</span> Videos</span>`}<span class="text-xs text-slate-600 ml-1">(${filteredVideos.length} items)</span></div><!-- Sorting Controls --><div class="flex items-center space-x-2"><span class="text-xs text-slate-500 font-medium">Sort By:</span><div class="inline-flex rounded-lg bg-slate-900 p-0.5 border border-slate-800 text-xs"><a href="/" class="rounded-md px-3 py-1 font-medium transition-colors bg-slate-800 text-white">Recent</a><a href="/popular" class="rounded-md px-3 py-1 font-medium transition-colors text-slate-400 hover:text-slate-200">Most Viewed</a><a href="/featured" class="rounded-md px-3 py-1 font-medium transition-colors text-slate-400 hover:text-slate-200">Top Rated</a></div></div></div><!-- Main Grid -->${filteredVideos.length === 0 ? renderTemplate`<div class="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-800 py-20 text-center"><div class="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-900 text-rose-500 border border-slate-800 mb-4 animate-bounce">✦</div><h3 class="text-lg font-bold text-slate-200">No Videos Found</h3><p class="text-xs text-slate-500 mt-1 max-w-sm">Try adjusting your keywords, or add new video entries directly to the centralized database configuration.</p></div>` : renderTemplate`<div id="video-grid" class="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">${pagedVideos.map((video) => renderTemplate`${renderComponent($$result, "VideoCard", $$VideoCard, { "video": video })}`)}</div>`}${totalPages > 1 && (() => {
+		const currentPage = 1;
+		const delta = 2;
+		const pages = [];
+		pages.push(1);
+		const rangeStart = Math.max(2, currentPage - delta);
+		const rangeEnd = Math.min(totalPages - 1, 3);
+		for (let i = rangeStart; i <= rangeEnd; i++) pages.push(i);
+		if (rangeEnd < totalPages - 1) pages.push("...");
+		if (totalPages > 1) pages.push(totalPages);
+		return renderTemplate`<div id="pagination-container" class="mt-12 flex items-center justify-center gap-2 flex-wrap"><span class="flex items-center gap-1 rounded-lg bg-slate-900/40 border border-slate-800/40 px-4 py-2 text-sm font-semibold text-slate-600 cursor-not-allowed">← Prev</span>${pages.map((p, idx) => p === "..." ? renderTemplate`<span${addAttribute(`dots-${idx}`, "key")} class="px-1 text-slate-600 select-none">…</span>` : renderTemplate`<a${addAttribute(p, "key")}${addAttribute(p === 1 ? "/" : `/page/${p}`, "href")}${addAttribute(`rounded-lg border px-3.5 py-2 text-sm font-bold transition-all ${p === currentPage ? "bg-rose-600 border-rose-500 text-white shadow-lg shadow-rose-600/30" : "bg-slate-900 border-slate-800 text-slate-400 hover:bg-slate-800 hover:text-white"}`, "class")}>${p}</a>`)}<a href="/page/2" class="flex items-center gap-1 rounded-lg bg-rose-600 border border-rose-500 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-500 transition-all shadow-lg shadow-rose-600/30">Next →</a></div>`;
+	})()}${filteredVideos.length === 0 && renderTemplate`<span></span>`}<!-- Footer Tag Cloud --><div class="mt-16 border-t border-slate-900 pt-8"><h3 class="text-xs font-bold uppercase tracking-widest text-slate-500 mb-4">Trending Tags</h3><div class="flex flex-wrap gap-2">${allTags.map((tag) => {
+		return renderTemplate`<a${addAttribute(`/tag/${tag.toLowerCase().replace(/\s+/g, "-").replace(/[^\w\-]+/g, "").replace(/\-\-+/g, "-").replace(/^-+/, "").replace(/-+$/, "")}`, "href")} class="text-xs rounded-lg border px-3 py-1 transition-all bg-slate-950 border-slate-900 text-slate-400 hover:border-slate-800 hover:text-slate-200">#${tag}</a>`;
+	})}</div></div><script>
+      document.addEventListener('DOMContentLoaded', () => {
+        const searchInputs = document.querySelectorAll('input[name="search"]');
+        const videoGrid = document.querySelector('#video-grid');
+        const paginationContainer = document.querySelector('#pagination-container');
+        const filterStatus = document.querySelector('#filter-status-text');
+        
+        let noResultsDiv = document.querySelector('#no-results-message');
+        if (!noResultsDiv && videoGrid) {
+          noResultsDiv = document.createElement('div');
+          noResultsDiv.id = 'no-results-message';
+          noResultsDiv.className = 'hidden flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-800 py-20 text-center';
+          noResultsDiv.innerHTML = \`
+            <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-900 text-rose-500 border border-slate-800 mb-4 animate-bounce">
+              ✦
+            </div>
+            <h3 class="text-lg font-bold text-slate-200">No Search Results Found</h3>
+            <p class="text-xs text-slate-500 mt-1 max-w-sm">
+              We couldn't find any videos matching your search. Try different keywords!
+            </p>
+          \`;
+          videoGrid.parentElement.insertBefore(noResultsDiv, videoGrid);
+        }
+
+        let videosData = [];
+
+        // Fetch the index once
+        fetch('/videos.json')
+          .then(res => res.json())
+          .then(data => {
+            videosData = data;
+            
+            // Check URL for search parameter (e.g. ?search=some-term)
+            const params = new URLSearchParams(window.location.search);
+            const searchParam = params.get('search');
+            if (searchParam) {
+              searchInputs.forEach(input => input.value = searchParam);
+              performSearch(searchParam);
+            }
+          })
+          .catch(err => console.error('Error fetching search index:', err));
+
+        // Support typing in search boxes
+        searchInputs.forEach(input => {
+          const form = input.closest('form');
+          if (form) {
+            form.addEventListener('submit', (e) => {
+              e.preventDefault();
+              performSearch(input.value);
+            });
+          }
+
+          input.addEventListener('input', (e) => {
+            performSearch(e.target.value);
+          });
+        });
+
+        function performSearch(query) {
+          const cleanQuery = query.trim().toLowerCase();
+          
+          // Update URL search parameter without reloading page
+          const url = new URL(window.location.href);
+          if (cleanQuery) {
+            url.searchParams.set('search', query);
+          } else {
+            url.searchParams.delete('search');
+          }
+          window.history.replaceState({}, '', url.toString());
+
+          if (!cleanQuery) {
+            // Restore default view (first 40 videos)
+            renderVideos(videosData.slice(0, 40));
+            if (paginationContainer) paginationContainer.classList.remove('hidden');
+            if (filterStatus) filterStatus.innerHTML = \`Showing <span class="text-rose-400 font-medium">All Trending</span> Videos <span class="text-xs text-slate-600 ml-1">(\${videosData.length} items)</span>\`;
+            return;
+          }
+
+          // Filter local search index
+          const results = videosData.filter(v => 
+            v.title.toLowerCase().includes(cleanQuery) || 
+            v.category.toLowerCase().includes(cleanQuery) ||
+            v.tags.some(t => t.toLowerCase().includes(cleanQuery))
+          );
+
+          // Hide pagination controls during search
+          if (paginationContainer) paginationContainer.classList.add('hidden');
+
+          // Update header status info
+          if (filterStatus) {
+            filterStatus.innerHTML = \`Search results for "<span class="text-rose-400 font-medium">\${query}</span>" <span class="text-xs text-slate-600 ml-1">(\${results.length} items)</span>\`;
+          }
+
+          renderVideos(results);
+        }
+
+        function renderVideos(items) {
+          if (!videoGrid) return;
+          if (items.length === 0) {
+            videoGrid.classList.add('hidden');
+            noResultsDiv.classList.remove('hidden');
+            return;
+          }
+
+          videoGrid.classList.remove('hidden');
+          noResultsDiv.classList.add('hidden');
+
+          const getCardGradient = (slug) => {
+            const hash = slug.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+            const gradients = [
+              'from-rose-600/20 to-purple-600/10 hover:from-rose-500/30 hover:to-purple-500/20',
+              'from-purple-600/20 to-indigo-600/10 hover:from-purple-500/30 hover:to-indigo-500/20',
+              'from-pink-600/20 to-rose-600/10 hover:from-pink-500/30 hover:to-rose-500/20',
+              'from-indigo-600/20 to-violet-600/10 hover:from-indigo-500/30 hover:to-violet-500/20',
+              'from-amber-600/20 to-rose-600/10 hover:from-amber-500/30 hover:to-rose-500/20',
+            ];
+            return gradients[hash % gradients.length];
+          };
+
+          videoGrid.innerHTML = items.map(item => \`
+            <a 
+              href="/videos/\${item.slug}"
+              class="group relative flex flex-col rounded-2xl overflow-hidden border border-slate-900 bg-slate-950/40 backdrop-blur-sm transition-all duration-300 hover:border-rose-500/30 hover:shadow-2xl hover:shadow-rose-500/5 hover:-translate-y-1"
+            >
+              <div class="relative aspect-video w-full overflow-hidden flex items-center justify-center bg-slate-950 \${!item.thumbnailUrl ? \`bg-gradient-to-br \${getCardGradient(item.slug)}\` : ''}">
+                \${item.thumbnailUrl ? \`
+                  <img 
+                    src="\${item.thumbnailUrl}" 
+                    referrerpolicy="no-referrer"
+                    alt="\${item.title}" 
+                    loading="lazy"
+                    class="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                \` : ''}
+                
+                <div class="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-slate-950/30"></div>
+                
+                <div class="relative z-10 flex h-12 w-12 items-center justify-center rounded-full bg-slate-950/80 border border-slate-800 text-white group-hover:scale-110 group-hover:bg-rose-600 group-hover:border-rose-500 group-hover:shadow-lg group-hover:shadow-rose-600/40 transition-all duration-300">
+                  <svg class="h-5 w-5 ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M8 5v14l11-7z" />
+                  </svg>
+                </div>
+
+                <span class="absolute top-3 left-3 z-10 flex items-center space-x-1 rounded-md bg-slate-950/85 border border-slate-800/80 px-2 py-0.5 text-[10px] font-bold text-amber-400 backdrop-blur-sm">
+                  <span>★</span>
+                  <span>\${item.rating || 90}%</span>
+                </span>
+
+                <span class="absolute bottom-3 right-3 z-10 rounded-md bg-gradient-to-r from-rose-600 to-pink-600 px-2.5 py-0.5 text-[9px] font-extrabold uppercase tracking-wider text-white shadow-md shadow-rose-950/30">
+                  \${item.category}
+                </span>
+              </div>
+
+              <div class="flex flex-col flex-1 p-4 bg-slate-950/20">
+                <h3 class="text-sm font-bold text-slate-200 line-clamp-2 group-hover:text-rose-400 group-hover:underline transition-colors min-h-[40px] leading-snug">\${item.title}</h3>
+                
+                <div class="border-t border-slate-900/60 my-3"></div>
+                
+                <div class="flex items-center justify-between text-[11px] text-slate-500">
+                  <span class="flex items-center font-medium">
+                    <svg class="h-3.5 w-3.5 mr-1 text-slate-600" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M12.395 2.553a1 1 0 00-1.45-.385c-.345.23-.614.558-.822.88-.214.33-.403.713-.57 1.116-.334.804-.614 1.768-.84 2.734a31.365 31.365 0 00-.613 3.58 2.64 2.64 0 01-.945-1.067c-.328-.655-.353-1.086-.353-1.086a1 1 0 00-1.343-.807c-.36.126-.632.418-.737.788-.13.457-.318 1.487.213 2.923.326.883.844 1.776 1.488 2.55 1.285 1.542 3.037 2.705 5.279 2.593 2.24-.112 4.106-2.127 4.106-4.527 0-1.127-.318-2.195-.87-3.08a6.388 6.388 0 01-.29-.44c-.382-.647-.796-1.157-1.164-1.555a11.66 11.66 0 00-1.62-1.428 1 1 0 00-.39-.148zM12 14a3 3 0 01-3-3c0-.188.017-.37.05-.547a4.01 4.01 0 001.39.753c.319.108.64.195.962.24a4.004 4.004 0 004.254-2.82c.11.396.183.82.183 1.26a3 3 0 01-3 3z" clip-rule="evenodd" />
+                    </svg>
+                    \${formatViews(item.views)} views
+                  </span>
+                  <span>\${item.dateAdded}</span>
+                </div>
+                <div class="flex flex-wrap gap-1 mt-3">
+                  \${(item.tags || []).slice(0, 2).map(tag => \`
+                    <span class="text-[9px] bg-slate-900 text-slate-400 border border-slate-800/80 rounded px-1.5 py-0.5">
+                      #\${tag}
+                    </span>
+                  \`).join('')}
+                </div>
+              </div>
+            </a>
+          \`).join('');
+        }
+      });
+    <\/script></section>
+` })}`;
+}, "C:/Users/Pubudu Nuwan/.gemini/antigravity/scratch/video-embed-blog/src/pages/index.astro", void 0);
+var $$file = "C:/Users/Pubudu Nuwan/.gemini/antigravity/scratch/video-embed-blog/src/pages/index.astro";
+//#endregion
+//#region \0virtual:astro:page:src/pages/index@_@astro
+var page = () => pages_exports;
+//#endregion
+export { page };
