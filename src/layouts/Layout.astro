@@ -1,6 +1,5 @@
 ---
 import '../styles/global.css';
-import { getCollection } from 'astro:content';
 
 interface Props {
   title: string;
@@ -18,38 +17,6 @@ const {
 
 // Absolute URL for SEO
 const canonicalURL = new URL(Astro.url.pathname, Astro.site || 'https://vixtube.net');
-
-// Fetch videos collection at build time to build categories/tags slug maps for SEO search routing
-let videos = [];
-try {
-  videos = await getCollection('videos');
-} catch (e) {
-  console.log("No videos found in content layer yet.", e);
-}
-
-const slugify = (text: string) => 
-  text.toString().toLowerCase()
-    .replace(/\s+/g, '-')
-    .replace(/[^\w\-]+/g, '')
-    .replace(/\-\-+/g, '-')
-    .replace(/^-+/, '')
-    .replace(/-+$/, '');
-
-const categorySlugMap: Record<string, string> = {};
-const tagSlugMap: Record<string, string> = {};
-
-videos.forEach(v => {
-  if (v.data.category) {
-    const clean = v.data.category.trim();
-    categorySlugMap[clean.toLowerCase()] = slugify(clean);
-  }
-  (v.data.tags || []).forEach((tag: string) => {
-    const clean = tag.trim();
-    if (clean) {
-      tagSlugMap[clean.toLowerCase()] = slugify(clean);
-    }
-  });
-});
 ---
 
 <!doctype html>
@@ -304,19 +271,34 @@ videos.forEach(v => {
     </nav>
 
     <!-- Global SEO Search Router Script -->
-    <script is:inline define:vars={{ categorySlugMap, tagSlugMap }}>
-      window.CATEGORY_SLUG_MAP = categorySlugMap;
-      window.TAG_SLUG_MAP = tagSlugMap;
+    <script is:inline>
+      let categorySlugMap = null;
+      let tagSlugMap = null;
+
+      async function loadSearchMaps() {
+        if (categorySlugMap && tagSlugMap) return;
+        try {
+          const res = await fetch('/search-maps.json');
+          const data = await res.json();
+          categorySlugMap = data.categorySlugMap;
+          tagSlugMap = data.tagSlugMap;
+        } catch (e) {
+          console.error("Failed to load search maps", e);
+        }
+      }
 
       document.addEventListener('DOMContentLoaded', () => {
         const searchForms = document.querySelectorAll('form[action="/"]');
         
         searchForms.forEach(form => {
-          form.addEventListener('submit', (e) => {
-            const input = form.querySelector('input[name="search"]');
-            if (!input) return;
-            
-            const rawQuery = input.value || '';
+          const input = form.querySelector('input[name="search"]');
+          if (input) {
+            input.addEventListener('focus', loadSearchMaps);
+            input.addEventListener('input', loadSearchMaps);
+          }
+
+          form.addEventListener('submit', async (e) => {
+            const rawQuery = input ? input.value : '';
             const query = rawQuery.trim().toLowerCase();
             if (!query) {
               e.preventDefault();
@@ -324,25 +306,22 @@ videos.forEach(v => {
               return;
             }
 
+            if (!categorySlugMap || !tagSlugMap) {
+              await loadSearchMaps();
+            }
+
             // Check for exact category match
-            if (window.CATEGORY_SLUG_MAP && window.CATEGORY_SLUG_MAP[query]) {
+            if (categorySlugMap && categorySlugMap[query]) {
               e.preventDefault();
-              window.location.href = `/category/${window.CATEGORY_SLUG_MAP[query]}`;
+              window.location.href = `/category/${categorySlugMap[query]}`;
               return;
             }
 
             // Check for exact tag match
-            if (window.TAG_SLUG_MAP && window.TAG_SLUG_MAP[query]) {
+            if (tagSlugMap && tagSlugMap[query]) {
               e.preventDefault();
-              window.location.href = `/tag/${window.TAG_SLUG_MAP[query]}`;
+              window.location.href = `/tag/${tagSlugMap[query]}`;
               return;
-            }
-
-            // Otherwise, let standard form submission take place (goes to /?search=query)
-            // But if we are already on the home page (/), let the local page script handle it instantly
-            if (window.location.pathname === '/' || window.location.pathname === '/index.html') {
-              // The home page's own submit handler intercepts and does preventDefault.
-              // So we don't need to do anything here for the home page.
             }
           });
         });

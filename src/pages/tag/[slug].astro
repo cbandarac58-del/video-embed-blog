@@ -14,24 +14,40 @@ export async function getStaticPaths() {
       .replace(/^-+/, '')
       .replace(/-+$/, '');
 
-  const tagsSet = new Set<string>();
+  const allCategories = [...new Set(allVideos.map(v => v.data.category))].filter(Boolean).sort((a, b) => {
+    if (a === 'Indian') return -1;
+    if (b === 'Indian') return 1;
+    return a.localeCompare(b);
+  });
+
+  const tagMap: Record<string, { tagName: string, videos: any[] }> = {};
+
   allVideos.forEach(v => {
     (v.data.tags || []).forEach(tag => {
       const tagClean = tag.trim();
       if (tagClean) {
-        tagsSet.add(slugify(tagClean));
+        const slug = slugify(tagClean);
+        if (!tagMap[slug]) {
+          tagMap[slug] = { tagName: tagClean, videos: [] };
+        }
+        tagMap[slug].videos.push(v);
       }
     });
   });
-  
-  return Array.from(tagsSet).map(tagSlug => ({
-    params: { slug: tagSlug }
+
+  return Object.entries(tagMap).map(([tagSlug, data]) => ({
+    params: { slug: tagSlug },
+    props: {
+      tagName: data.tagName,
+      allCategories,
+      videos: data.videos.sort((a, b) => new Date(b.data.dateAdded).getTime() - new Date(a.data.dateAdded).getTime())
+    }
   }));
 }
 
 const { slug } = Astro.params;
+const { tagName, allCategories, videos } = Astro.props;
 
-// Helper to slugify tag names consistently
 const slugify = (text: string) => 
   text.toString().toLowerCase()
     .replace(/\s+/g, '-')
@@ -40,42 +56,6 @@ const slugify = (text: string) =>
     .replace(/^-+/, '')
     .replace(/-+$/, '');
 
-let allVideos = [];
-try {
-  allVideos = await getCollection('videos');
-} catch (e) {
-  console.log("No videos found in content layer", e);
-}
-
-// Extract unique categories
-const allCategories = [...new Set(allVideos.map(v => v.data.category))].filter(Boolean);
-
-// Find videos with this tag
-const matchingVideos = allVideos.filter(v => 
-  (v.data.tags || []).some(tag => slugify(tag) === slug)
-);
-
-if (matchingVideos.length === 0) {
-  return new Response(null, {
-    status: 404,
-    statusText: 'Tag Not Found'
-  });
-}
-
-// Get the original tagName (use the first match)
-let tagName = slug;
-for (const v of matchingVideos) {
-  const match = (v.data.tags || []).find(tag => slugify(tag) === slug);
-  if (match) {
-    tagName = match.trim();
-    break;
-  }
-}
-
-// Sort matching videos by date added descending
-const videos = matchingVideos.sort((a, b) => new Date(b.data.dateAdded).getTime() - new Date(a.data.dateAdded).getTime());
-
-// Unique description: use top 2 video titles for uniqueness
 const topTitles = videos.slice(0, 2).map(v => v.data.title).join(', ');
 const tagDesc = `Watch ${videos.length} free ${tagName} XXX videos online. Top picks: ${topTitles}. Stream HD adult content on any device.`;
 

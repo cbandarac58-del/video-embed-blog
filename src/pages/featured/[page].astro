@@ -6,12 +6,21 @@ import VideoCard from '../../components/VideoCard.astro';
 
 export async function getStaticPaths() {
   const allVideos = await getCollection('videos');
+  
+  const featuredVideos = [...allVideos].sort((a, b) => (b.data.rating || 90) - (a.data.rating || 90));
+  const categories = [...new Set(allVideos.map(v => v.data.category))].filter(Boolean);
+  
   const PER_PAGE = 40;
   const totalPages = Math.ceil(allVideos.length / PER_PAGE);
   const paths = [];
   for (let p = 2; p <= totalPages; p++) {
     paths.push({
-      params: { page: p.toString() }
+      params: { page: p.toString() },
+      props: {
+        featuredVideos,
+        categories,
+        totalPages
+      }
     });
   }
   return paths;
@@ -19,20 +28,12 @@ export async function getStaticPaths() {
 
 const PER_PAGE = 40;
 const { page } = Astro.params;
+const { featuredVideos, categories, totalPages } = Astro.props;
 const currentPage = parseInt(page || '2', 10);
 
-let allVideos = [];
-try {
-  allVideos = await getCollection('videos');
-} catch (e) {
-  console.log("No videos found", e);
-}
-
-const featuredVideos = [...allVideos].sort((a, b) => (b.data.rating || 90) - (a.data.rating || 90));
 const totalVideos = featuredVideos.length;
-const totalPages = Math.ceil(totalVideos / PER_PAGE);
 const pagedVideos = featuredVideos.slice((currentPage - 1) * PER_PAGE, currentPage * PER_PAGE);
-const categories = [...new Set(allVideos.map(v => v.data.category))].filter(Boolean);
+
 
 const slugify = (text: string) => 
   text.toString().toLowerCase()

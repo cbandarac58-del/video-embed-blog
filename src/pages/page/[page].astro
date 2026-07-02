@@ -5,20 +5,32 @@ import AdContainer from '../../components/AdContainer.astro';
 import VideoCard from '../../components/VideoCard.astro';
 
 export async function getStaticPaths() {
-  const { getCollection } = await import('astro:content');
-  const videos = await getCollection('videos');
+  const allVideos = await getCollection('videos');
+  const sortedVideos = allVideos.sort((a, b) => new Date(b.data.dateAdded).getTime() - new Date(a.data.dateAdded).getTime());
+  
+  const categories = [...new Set(sortedVideos.map(v => v.data.category))].filter(Boolean);
+  const allTags = [...new Set(sortedVideos.flatMap(v => v.data.tags))].filter(Boolean).slice(0, 15);
+  
   const VIDEOS_PER_PAGE = 40;
-  const totalPages = Math.ceil(videos.length / VIDEOS_PER_PAGE);
+  const totalPages = Math.ceil(sortedVideos.length / VIDEOS_PER_PAGE);
   const paths = [];
+  
   for (let p = 2; p <= totalPages; p++) {
     paths.push({
-      params: { page: p.toString() }
+      params: { page: p.toString() },
+      props: {
+        sortedVideos,
+        categories,
+        allTags,
+        totalPages
+      }
     });
   }
   return paths;
 }
 
 const { page } = Astro.params;
+const { sortedVideos, categories, allTags, totalPages } = Astro.props;
 const currentPage = parseInt(page || '1', 10);
 
 const activeCategory = '';
@@ -26,40 +38,10 @@ const sortBy = 'dateAdded';
 
 const VIDEOS_PER_PAGE = 40;
 
-// Fetch videos collection
-let videos = [];
-try {
-  videos = await getCollection('videos');
-} catch (e) {
-  console.log("No videos found in content layer yet.", e);
-}
-
-// Extract unique categories
-const categories = [...new Set(videos.map(v => v.data.category))].filter(Boolean);
-const allTags = [...new Set(videos.flatMap(v => v.data.tags))].filter(Boolean).slice(0, 15);
-
-// Apply category filter
-let filteredVideos = [...videos];
-
-// Parse views into numeric values for sorting
-function parseViews(v: string | number): number {
-  if (typeof v === 'number') return v;
-  const clean = v.trim().toLowerCase();
-  const num = parseFloat(clean);
-  if (clean.includes('m')) return num * 1000000;
-  if (clean.includes('k')) return num * 1000;
-  return num || 0;
-}
-
-// Apply sorting
-filteredVideos.sort((a, b) => {
-  return new Date(b.data.dateAdded).getTime() - new Date(a.data.dateAdded).getTime();
-});
-
-// Paginate
 const start = (currentPage - 1) * VIDEOS_PER_PAGE;
-const pageVideos = filteredVideos.slice(start, start + VIDEOS_PER_PAGE);
-const totalFilteredPages = Math.ceil(filteredVideos.length / VIDEOS_PER_PAGE);
+const pageVideos = sortedVideos.slice(start, start + VIDEOS_PER_PAGE);
+const totalFilteredPages = totalPages;
+const filteredVideos = sortedVideos;
 
 // Format views
 function formatViews(val: string | number) {

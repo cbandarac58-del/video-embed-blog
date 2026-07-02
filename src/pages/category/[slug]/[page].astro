@@ -11,20 +11,32 @@ export async function getStaticPaths() {
       .replace(/\s+/g, '-').replace(/[^\w\-]+/g, '')
       .replace(/\-\-+/g, '-').replace(/^-+/, '').replace(/-+$/, '');
 
-  const allCategories = [...new Set(allVideos.map(v => v.data.category))].filter(Boolean);
+  const allCategories = [...new Set(allVideos.map(v => v.data.category))].filter(Boolean).sort((a, b) => {
+    if (a === 'Indian') return -1;
+    if (b === 'Indian') return 1;
+    return a.localeCompare(b);
+  });
   
   const paths = [];
   const PER_PAGE = 40;
   
   for (const category of allCategories) {
-    const categoryVideos = allVideos.filter(v => v.data.category === category);
+    const categoryVideos = allVideos
+      .filter(v => v.data.category === category)
+      .sort((a, b) => new Date(b.data.dateAdded).getTime() - new Date(a.data.dateAdded).getTime());
     const totalVideos = categoryVideos.length;
     const totalPages = Math.ceil(totalVideos / PER_PAGE);
     
     for (let p = 2; p <= totalPages; p++) {
       paths.push({
         params: { slug: slugify(category), page: p.toString() },
-        props: { categoryName: category }
+        props: { 
+          categoryName: category,
+          allCategories,
+          categoryVideos,
+          totalVideos,
+          totalPages
+        }
       });
     }
   }
@@ -32,36 +44,17 @@ export async function getStaticPaths() {
   return paths;
 }
 
-const PER_PAGE = 40;
 const { slug, page } = Astro.params;
-const { categoryName } = Astro.props;
+const { categoryName, allCategories, categoryVideos, totalVideos, totalPages } = Astro.props;
 const currentPage = parseInt(page || '2', 10);
-
-let allVideos = [];
-try {
-  allVideos = await getCollection('videos');
-} catch (e) {
-  console.log("No videos found", e);
-}
+const VIDEOS_PER_PAGE = 40;
 
 const slugify = (text: string) =>
   text.toString().toLowerCase()
     .replace(/\s+/g, '-').replace(/[^\w\-]+/g, '')
     .replace(/\-\-+/g, '-').replace(/^-+/, '').replace(/-+$/, '');
 
-const allCategories = [...new Set(allVideos.map(v => v.data.category))].filter(Boolean).sort((a, b) => {
-  if (a === 'Indian') return -1;
-  if (b === 'Indian') return 1;
-  return a.localeCompare(b);
-});
-
-const categoryVideos = allVideos
-  .filter(v => v.data.category === categoryName)
-  .sort((a, b) => new Date(b.data.dateAdded).getTime() - new Date(a.data.dateAdded).getTime());
-
-const totalVideos = categoryVideos.length;
-const totalPages = Math.ceil(totalVideos / PER_PAGE);
-const videos = categoryVideos.slice((currentPage - 1) * PER_PAGE, currentPage * PER_PAGE);
+const videos = categoryVideos.slice((currentPage - 1) * VIDEOS_PER_PAGE, currentPage * VIDEOS_PER_PAGE);
 const baseSlug = slug;
 
 function formatViews(val: string | number) {

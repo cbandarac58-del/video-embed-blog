@@ -6,60 +6,87 @@ import VideoCard from '../../components/VideoCard.astro';
 
 export async function getStaticPaths() {
   const videos = await getCollection('videos');
-  return videos.map((video) => ({
-    params: { slug: video.id },
-    props: { video }
-  }));
+
+  // Group videos by category for fast similarity lookup
+  const videosByCategory: Record<string, typeof videos> = {};
+  videos.forEach(v => {
+    const cat = v.data.category || 'Other';
+    if (!videosByCategory[cat]) {
+      videosByCategory[cat] = [];
+    }
+    videosByCategory[cat].push(v);
+  });
+
+  // Group videos by title to resolve duplicate SEO issues
+  const videosByTitle: Record<string, typeof videos> = {};
+  videos.forEach(v => {
+    const title = v.data.title;
+    if (!videosByTitle[title]) {
+      videosByTitle[title] = [];
+    }
+    videosByTitle[title].push(v);
+  });
+
+  return videos.map((video) => {
+    const { title, category, tags, slug } = video.data;
+
+    // Detect duplicates stably
+    const duplicateVideos = videosByTitle[title] || [];
+    let uniqueTitle = title;
+    let uniqueDescription = `Watch ${title} embedded video online for free. Category: ${category}. Views: ${video.data.views}.`;
+
+    if (duplicateVideos.length > 1) {
+      const sortedDuplicates = [...duplicateVideos].sort((a, b) => a.data.slug.localeCompare(b.data.slug));
+      const duplicateIndex = sortedDuplicates.findIndex(v => v.data.slug === slug);
+      if (duplicateIndex !== -1) {
+        uniqueTitle = `${title} - Clip ${duplicateIndex + 1}`;
+        uniqueDescription = `Watch ${title} - Clip ${duplicateIndex + 1} embedded video online for free. Category: ${category}. Views: ${video.data.views}.`;
+      }
+    }
+
+    // Similarity score calculation against category candidates
+    const sameCatVideos = videosByCategory[category] || [];
+    
+    function getSimilarityScore(videoB: any) {
+      const tagsA = new Set(tags || []);
+      const tagsB = videoB.data.tags || [];
+      let intersectionSize = 0;
+      for (const tag of tagsB) {
+        if (tagsA.has(tag)) intersectionSize++;
+      }
+      let score = intersectionSize * 10;
+      if (category === videoB.data.category) score += 5;
+      return score;
+    }
+
+    // Restrict similarity check to first 100 same-category videos for extremely fast O(N) build speed
+    const candidateVideos = sameCatVideos
+      .filter(v => v.data.slug !== slug)
+      .slice(0, 100);
+
+    const relatedVideos = candidateVideos
+      .map((v) => ({ video: v, score: getSimilarityScore(v) }))
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 4)
+      .map((item) => item.video);
+
+    return {
+      params: { slug: video.id },
+      props: {
+        video,
+        uniqueTitle,
+        uniqueDescription,
+        relatedVideos
+      }
+    };
+  });
 }
 
-const { video } = Astro.props;
+const { video, uniqueTitle, uniqueDescription, relatedVideos } = Astro.props;
 const { slug } = Astro.params;
 
 const { title, embedUrl, rating, views, category, tags, dateAdded, thumbnailUrl } = video.data;
 const catSlug = category.toLowerCase().replace(/\s+/g, '-').replace(/[^\w\-]+/g, '').replace(/\-\-+/g, '-').replace(/^-+/, '').replace(/-+$/, '');
-
-// Fetch related videos using a smart tag-similarity Jaccard scoring algorithm
-const allVideos = await getCollection('videos');
-
-// Solve duplicate page title / description issue for Yandex/Google SEO
-const duplicateVideos = allVideos.filter(v => v.data.title === title);
-let uniqueTitle = title;
-let uniqueDescription = `Watch ${title} embedded video online for free. Category: ${category}. Views: ${views}.`;
-
-if (duplicateVideos.length > 1) {
-  // Sort duplicates stably by slug to keep indices consistent
-  duplicateVideos.sort((a, b) => a.data.slug.localeCompare(b.data.slug));
-  const duplicateIndex = duplicateVideos.findIndex(v => v.data.slug === slug);
-  if (duplicateIndex !== -1) {
-    uniqueTitle = `${title} - Clip ${duplicateIndex + 1}`;
-    uniqueDescription = `Watch ${title} - Clip ${duplicateIndex + 1} embedded video online for free. Category: ${category}. Views: ${views}.`;
-  }
-}
-
-function getSimilarityScore(videoA: any, videoB: any) {
-  const tagsA = new Set(videoA.data.tags || []);
-  const tagsB = videoB.data.tags || [];
-  
-  let intersectionSize = 0;
-  for (const tag of tagsB) {
-    if (tagsA.has(tag)) {
-      intersectionSize++;
-    }
-  }
-
-  let score = intersectionSize * 10;
-  if (videoA.data.category === videoB.data.category) {
-    score += 5;
-  }
-  return score;
-}
-
-const relatedVideos = allVideos
-  .filter((v) => v.data.slug !== video.data.slug)
-  .map((v) => ({ video: v, score: getSimilarityScore(video, v) }))
-  .sort((a, b) => b.score - a.score)
-  .slice(0, 4)
-  .map((item) => item.video);
 
 // Format views count
 function formatViews(val: string | number) {
