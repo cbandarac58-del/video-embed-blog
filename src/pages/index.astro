@@ -72,9 +72,10 @@ filteredVideos.sort((a, b) => {
 });
 
 // Pagination — page 1 only on index
+const isDefaultHome = !activeCategory && !activeTag && !searchQuery;
 const totalVideos = filteredVideos.length;
 const totalPages = Math.ceil(totalVideos / VIDEOS_PER_PAGE);
-const pagedVideos = filteredVideos.slice(0, VIDEOS_PER_PAGE);
+const pagedVideos = filteredVideos.slice(0, isDefaultHome ? 120 : VIDEOS_PER_PAGE);
 
 // Format numbers or return strings for views
 function formatViews(val: string | number) {
@@ -207,12 +208,53 @@ function getCardGradient(slug: string) {
         </p>
       </div>
     ) : (
-      <div id="video-grid" class="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+    ) : (
+      <div id="video-grid" class={`grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 ${isDefaultHome ? 'home-rotator' : ''}`}>
         {/* Render Video Cards */}
         {pagedVideos.map((video) => (
           <VideoCard video={video} />
         ))}
       </div>
+
+      <script is:inline>
+        (function() {
+          try {
+            const activeCategory = new URLSearchParams(window.location.search).get('category');
+            const activeTag = new URLSearchParams(window.location.search).get('tag');
+            const searchQuery = new URLSearchParams(window.location.search).get('search');
+            
+            if (!activeCategory && !activeTag && !searchQuery && (window.location.pathname === '/' || window.location.pathname === '/index.html')) {
+              const visits = parseInt(localStorage.getItem('vix_home_visits') || '0', 10);
+              const activeGroup = visits % 3; // 0, 1, or 2
+              
+              const grid = document.getElementById('video-grid');
+              if (grid) {
+                const cards = grid.querySelectorAll(':scope > a');
+                cards.forEach((card, idx) => {
+                  const cardGroup = Math.floor(idx / 40);
+                  if (cardGroup === activeGroup) {
+                    card.style.display = 'flex';
+                  } else {
+                    card.style.display = 'none';
+                  }
+                });
+                // Remove class to disable CSS default override
+                grid.classList.remove('home-rotator');
+              }
+              // Increment visit index for next visit
+              localStorage.setItem('vix_home_visits', (visits + 1).toString());
+            }
+          } catch (e) {
+            console.error('Home visit rotator error:', e);
+          }
+        })();
+      </script>
+
+      <style>
+        .home-rotator > a:nth-child(n+41) {
+          display: none !important;
+        }
+      </style>
     )}
 
     {/* Pagination Controls — smart truncated */}
