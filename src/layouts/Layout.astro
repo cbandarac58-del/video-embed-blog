@@ -75,6 +75,11 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site || 'https://vixtube.
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&display=swap" rel="stylesheet" />
 
+    <!-- Preconnect to high-traffic thumbnail CDNs to reduce LCP latency -->
+    <link rel="preconnect" href="https://thumb-cdn77.xvideos-cdn.com" crossorigin />
+    <link rel="preconnect" href="https://thumbs-gcore.xvideos-cdn.com" crossorigin />
+    <link rel="preconnect" href="https://thumbs.xvideos-cdn.com" crossorigin />
+
     <!-- ExoClick Push Notification Zone 5942298 -->
     <script type="application/javascript">
       pn_idzone = 5942298;
@@ -83,7 +88,7 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site || 'https://vixtube.
       pn_soft_ask = 0;
       pn_filename = "/worker.js";
     </script>
-    <script type="application/javascript" src="https://js.wpnsrv.com/pn.php"></script>
+    <script async type="application/javascript" src="https://js.wpnsrv.com/pn.php"></script>
 
     <!-- Yandex.Metrika counter -->
     <script is:inline type="text/javascript">
@@ -117,26 +122,17 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site || 'https://vixtube.
     </script>
   </head>
   <body class="flex flex-col min-h-screen bg-slate-950 text-slate-100 selection:bg-rose-500 selection:text-white pb-16 md:pb-0">
-    <!-- AdBlock Popunder Recovery + ExoClick Ad Providers -->
-    <script async type="application/javascript" src="https://a.magsrv.com/ad-provider.js"></script>
-    <script async type="application/javascript" src="https://a.pemsrv.com/ad-provider.js"></script>
-    <script is:inline src="/popunder-adblock.js"></script>
-
     <!-- ExoClick Zone 5938548 (magsrv) -->
     <ins class="eas6a97888e31" data-zoneid="5938548"></ins>
-    <script>(AdProvider = window.AdProvider || []).push({"serve": {}});</script>
 
     <!-- ExoClick Zone 5938540 (pemsrv) -->
     <ins class="eas6a97888e35" data-zoneid="5938540"></ins>
-    <script>(AdProvider = window.AdProvider || []).push({"serve": {}});</script>
 
     <!-- ExoClick Multi Format Zone 5942318 -->
     <ins class="eas6a97888e38" data-zoneid="5942318"></ins>
-    <script>(AdProvider = window.AdProvider || []).push({"serve": {}});</script>
 
     <!-- ExoClick Sticky Banner Zone 5942314 -->
     <ins class="eas6a97888e17" data-zoneid="5942314"></ins>
-    <script>(AdProvider = window.AdProvider || []).push({"serve": {}});</script>
 
     <!-- Header with Glassmorphic Navbar -->
     <header class="sticky top-0 z-40 w-full border-b border-slate-900 bg-slate-950/80 backdrop-blur-md relative">
@@ -191,7 +187,6 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site || 'https://vixtube.
     <!-- ExoClick Recommendation Widget Zone 5938550 – between content and footer -->
     <div class="mx-auto max-w-7xl px-4 py-4">
       <ins class="eas6a97888e20" data-zoneid="5938550"></ins>
-      <script>(AdProvider = window.AdProvider || []).push({"serve": {}});</script>
     </div>
 
     <!-- Footer -->
@@ -337,6 +332,20 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site || 'https://vixtube.
           }
         });
       });
+    </script>
+
+    <!-- AdBlock Popunder Recovery + ExoClick Ad Providers (Asynchronously deferred to maximize page speed & LCP) -->
+    <script async type="application/javascript" src="https://a.magsrv.com/ad-provider.js"></script>
+    <script async type="application/javascript" src="https://a.pemsrv.com/ad-provider.js"></script>
+    <script is:inline src="/popunder-adblock.js"></script>
+    <script is:inline>
+      window.AdProvider = window.AdProvider || [];
+      // Trigger all 5 registered ad zones (4 top slots + 1 recommendation widget)
+      window.AdProvider.push({"serve": {}});
+      window.AdProvider.push({"serve": {}});
+      window.AdProvider.push({"serve": {}});
+      window.AdProvider.push({"serve": {}});
+      window.AdProvider.push({"serve": {}});
     </script>
   </body>
 </html>
