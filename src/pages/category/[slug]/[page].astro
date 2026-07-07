@@ -33,7 +33,7 @@ export async function getStaticPaths() {
         props: { 
           categoryName: category,
           allCategories,
-          categoryVideos,
+          pagedVideos: categoryVideos.slice((p - 1) * PER_PAGE, p * PER_PAGE),
           totalVideos,
           totalPages
         }
@@ -45,7 +45,7 @@ export async function getStaticPaths() {
 }
 
 const { slug, page } = Astro.params;
-const { categoryName, allCategories, categoryVideos, totalVideos, totalPages } = Astro.props;
+const { categoryName, allCategories, pagedVideos, totalVideos, totalPages } = Astro.props;
 const currentPage = parseInt(page || '2', 10);
 const VIDEOS_PER_PAGE = 40;
 
@@ -54,7 +54,7 @@ const slugify = (text: string) =>
     .replace(/\s+/g, '-').replace(/[^\w\-]+/g, '')
     .replace(/\-\-+/g, '-').replace(/^-+/, '').replace(/-+$/, '');
 
-const videos = categoryVideos.slice((currentPage - 1) * VIDEOS_PER_PAGE, currentPage * VIDEOS_PER_PAGE);
+const videos = pagedVideos;
 const baseSlug = slug;
 
 function formatViews(val: string | number) {

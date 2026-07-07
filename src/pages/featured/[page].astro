@@ -17,7 +17,8 @@ export async function getStaticPaths() {
     paths.push({
       params: { page: p.toString() },
       props: {
-        featuredVideos,
+        pagedVideos: featuredVideos.slice((p - 1) * PER_PAGE, p * PER_PAGE),
+        totalVideos: featuredVideos.length,
         categories,
         totalPages
       }
@@ -26,13 +27,10 @@ export async function getStaticPaths() {
   return paths;
 }
 
-const PER_PAGE = 40;
 const { page } = Astro.params;
-const { featuredVideos, categories, totalPages } = Astro.props;
+const { pagedVideos, totalVideos, categories, totalPages } = Astro.props;
 const currentPage = parseInt(page || '2', 10);
 
-const totalVideos = featuredVideos.length;
-const pagedVideos = featuredVideos.slice((currentPage - 1) * PER_PAGE, currentPage * PER_PAGE);
 
 
 const slugify = (text: string) => 
