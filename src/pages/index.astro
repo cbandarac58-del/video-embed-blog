@@ -208,13 +208,13 @@ function getCardGradient(slug: string) {
         </p>
       </div>
     ) : (
-    ) : (
       <div id="video-grid" class={`grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 ${isDefaultHome ? 'home-rotator' : ''}`}>
         {/* Render Video Cards */}
         {pagedVideos.map((video) => (
           <VideoCard video={video} />
         ))}
       </div>
+    )}
 
       <script is:inline>
         (function() {
@@ -255,7 +255,6 @@ function getCardGradient(slug: string) {
           display: none !important;
         }
       </style>
-    )}
 
     {/* Pagination Controls — smart truncated */}
     {totalPages > 1 && (() => {
