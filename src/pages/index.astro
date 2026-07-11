@@ -34,6 +34,8 @@ let filteredVideos = [...videos];
 
 if (activeCategory) {
   filteredVideos = filteredVideos.filter(v => v.data.category.toLowerCase() === activeCategory.toLowerCase());
+} else {
+  filteredVideos = filteredVideos.filter(v => v.data.category.toLowerCase() !== 'yt romance');
 }
 
 if (activeTag) {

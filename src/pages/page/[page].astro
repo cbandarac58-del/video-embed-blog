@@ -5,7 +5,7 @@ import AdContainer from '../../components/AdContainer.astro';
 import VideoCard from '../../components/VideoCard.astro';
 
 export async function getStaticPaths() {
-  const allVideos = await getCollection('videos');
+  const allVideos = (await getCollection('videos')).filter(v => v.data.category.toLowerCase() !== 'yt romance');
   const sortedVideos = allVideos.sort((a, b) => new Date(b.data.dateAdded).getTime() - new Date(a.data.dateAdded).getTime());
   
   const categories = [...new Set(sortedVideos.map(v => v.data.category))].filter(Boolean);

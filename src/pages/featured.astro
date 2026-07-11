@@ -8,7 +8,7 @@ const PER_PAGE = 40;
 
 let videos = [];
 try {
-  videos = await getCollection('videos');
+  videos = (await getCollection('videos')).filter(v => v.data.category.toLowerCase() !== 'yt romance');
 } catch (e) {
   console.log("No videos found in content layer", e);
 }
