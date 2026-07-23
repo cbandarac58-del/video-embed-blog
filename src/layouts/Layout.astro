@@ -6,13 +6,15 @@ interface Props {
   description?: string;
   keywords?: string;
   isVideoPage?: boolean;
+  lang?: string;
 }
 
 const { 
   title, 
   description = "Watch top-trending free adult videos, hot amateur clips, and premium XXX streaming content. Fully optimized for all mobile devices.",
   keywords = "adult videos, free porn, xxx clips, hot amateur, desi bhabhi, stepsister sex, 18+ stream",
-  isVideoPage = false
+  isVideoPage = false,
+  lang = Astro.url.pathname.startsWith('/es') ? 'es' : 'en'
 } = Astro.props;
 
 // Absolute URL for SEO
@@ -20,7 +22,7 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site || 'https://vixtube.
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang={lang}>
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -75,10 +77,8 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site || 'https://vixtube.
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&display=swap" rel="stylesheet" />
 
-    <!-- Preconnect to high-traffic thumbnail CDNs to reduce LCP latency -->
+    <!-- Preconnect to high-traffic thumbnail CDN (max 4 connections overall for Lighthouse compliance) -->
     <link rel="preconnect" href="https://thumb-cdn77.xvideos-cdn.com" crossorigin />
-    <link rel="preconnect" href="https://thumbs-gcore.xvideos-cdn.com" crossorigin />
-    <link rel="preconnect" href="https://thumbs.xvideos-cdn.com" crossorigin />
 
     <!-- ExoClick Push Notification Zone 5942298 -->
     <script type="application/javascript">
@@ -167,9 +167,10 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site || 'https://vixtube.
               type="text" 
               name="search" 
               placeholder="Search..." 
+              aria-label="Search"
               class="w-32 xs:w-44 sm:w-48 lg:w-64 rounded-full bg-slate-900 border border-slate-800 px-4 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:border-rose-500 focus:outline-none focus:ring-2 focus:ring-rose-500/20 transition-all shadow-inner"
             />
-            <button type="submit" class="absolute right-3 top-2.5 text-slate-500 hover:text-rose-500">
+            <button type="submit" aria-label="Search videos" class="absolute right-3 top-2.5 text-slate-500 hover:text-rose-500">
               <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>

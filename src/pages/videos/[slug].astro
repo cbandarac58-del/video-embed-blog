@@ -166,7 +166,7 @@ function safeISODate(dateStr: string) {
             <video id="vast-preroll-video" class="w-full h-full object-contain" playsinline muted></video>
             <div id="vast-skip-bar" class="absolute bottom-3 right-3 flex items-center gap-2">
               <span id="vast-skip-countdown" class="text-xs text-white bg-black/70 px-2 py-1 rounded">Ad: <span id="vast-secs">5</span>s</span>
-              <button id="vast-skip-btn" class="hidden text-xs bg-rose-600 hover:bg-rose-500 text-white px-3 py-1 rounded transition-colors">Skip Ad ›</button>
+              <button id="vast-skip-btn" aria-label="Skip advertisement" class="hidden text-xs bg-rose-600 hover:bg-rose-500 text-white px-3 py-1 rounded transition-colors">Skip Ad ›</button>
             </div>
             <a id="vast-click-link" href="#" target="_blank" rel="noopener" class="absolute inset-0 z-5"></a>
           </div>
@@ -310,7 +310,7 @@ function safeISODate(dateStr: string) {
 
             <!-- Action buttons -->
             <div class="flex items-center space-x-2">
-              <button id="share-btn" class="flex items-center space-x-1.5 rounded-lg bg-slate-900 border border-slate-800 hover:border-rose-500 hover:text-white px-3 py-1.5 transition-colors">
+              <button id="share-btn" aria-label="Share video link" class="flex items-center space-x-1.5 rounded-lg bg-slate-900 border border-slate-800 hover:border-rose-500 hover:text-white px-3 py-1.5 transition-colors">
                 <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 10.742s-1.839 2.51-1.839 5.258c0 1.543.826 2.37 2.148 2.37 1.44 0 2.215-.815 3.016-1.782.784.957 1.56 1.782 3.016 1.782 1.322 0 2.148-.827 2.148-2.37 0-2.748-1.839-5.258-1.839-5.258m-6.65 0L12 4l3.334 6.742" />
                 </svg>
