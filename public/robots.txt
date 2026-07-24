@@ -1,4 +1,29 @@
 User-agent: *
 Allow: /
 
+# Block known aggressive scrapers and headless bots
+User-agent: AhrefsBot
+Disallow: /
+
+User-agent: PetalBot
+Disallow: /
+
+User-agent: MJ12bot
+Disallow: /
+
+User-agent: SemrushBot
+Disallow: /
+
+User-agent: DotBot
+Disallow: /
+
+User-agent: BLEXBot
+Disallow: /
+
+User-agent: Python
+Disallow: /
+
+User-agent: Go-http-client
+Disallow: /
+
 Sitemap: https://vixtube.net/sitemap.xml

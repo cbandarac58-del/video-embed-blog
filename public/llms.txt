@@ -1,0 +1,22 @@
+# VixTube - Adult Video Embedding & Streaming Directory
+
+> VixTube is a free HD adult video indexing platform serving streaming clips, amateur adult content, and organized video categories.
+
+## Core Navigation Map
+
+- [Home Page](https://vixtube.net/): Main index featuring latest trending videos.
+- [Popular Videos](https://vixtube.net/popular): Most viewed adult video clips sorted by lifetime metrics.
+- [Featured Content](https://vixtube.net/featured): Top rated clips selected by user engagement.
+- [Sitemap](https://vixtube.net/sitemap.xml): XML sitemap listing all published video watch pages.
+
+## API & Data Endpoints
+
+- [Search Map](https://vixtube.net/search-maps.json): JSON mapping of category and tag slugs.
+- [Videos Feed](https://vixtube.net/videos.json): JSON feed of video metadata and embed parameters.
+
+## Compliance & Legal
+
+- [DMCA Policy](https://vixtube.net/dmca): DMCA Takedown and Copyright guidelines.
+- [Terms of Service](https://vixtube.net/terms): Age verification (18+) and service terms.
+- [Privacy Policy](https://vixtube.net/privacy): Data handling and cookies notice.
+- [Contact Support](https://vixtube.net/contact): Inquiries and legal support contact.

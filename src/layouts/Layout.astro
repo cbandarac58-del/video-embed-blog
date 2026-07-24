@@ -51,11 +51,11 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site || 'https://vixtube.
     <meta name="RATING" content="RTA-5042-1996-1104-1554-4306-EST" />
     <meta name="google-site-verification" content="E-DT_XvMRPKJ7vYwBh-B4E92iWXB7TDDNXwZl1E01es" />
     <meta name="naver-site-verification" content="d122dd0d8f372b3a5bafaef0c831b66a484d2127" />
-    <meta name="6a97888e-site-verification" content="a502c8dde2a7cf20862417e7d4a8d003" />
+    
+    <!-- JuicyAds Site Verification -->
+    <meta name="juicyads-site-verification" content="50b02a451fcf18adb72adb6c073cdb6c">
 
-    <!-- Prevent Google from indexing ad/third-party videos on listing pages.
-         Only individual video watch pages (/videos/[slug]) should be indexed as video pages.
-         This fixes the 'Video isn't on a watch page' GSC error caused by ExoClick ad video content. -->
+    <!-- Robot tags -->
     {!isVideoPage && <meta name="robots" content="max-video-preview:0" />}
 
     <!-- Open Graph / Facebook -->
@@ -72,34 +72,23 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site || 'https://vixtube.
     <meta property="twitter:description" content={description} />
     <meta property="twitter:image" content="/og-image.jpg" />
 
-    <!-- Google Fonts -->
+    <!-- Google Fonts (Non-render-blocking font loading) -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&display=swap" onload="this.onload=null;this.rel='stylesheet'" />
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&display=swap" /></noscript>
 
-    <!-- Preconnect to high-traffic thumbnail CDN (max 4 connections overall for Lighthouse compliance) -->
-    <link rel="preconnect" href="https://thumb-cdn77.xvideos-cdn.com" crossorigin />
-
-    <!-- ExoClick Push Notification Zone 5942298 -->
-    <script type="application/javascript">
-      pn_idzone = 5942298;
-      pn_sleep_seconds = 0;
-      pn_is_self_hosted = 1;
-      pn_soft_ask = 0;
-      pn_filename = "/worker.js";
-    </script>
-    <script async type="application/javascript" src="https://js.wpnsrv.com/pn.php"></script>
-
-    <!-- Yandex.Metrika counter -->
+    <!-- Yandex.Metrika counter (Deferred to window.onload to improve TBT & LCP) -->
     <script is:inline type="text/javascript">
-       (function(m,e,t,r,i,k,a){
-           m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
-           m[i].l=1*new Date();
-           for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}
-           k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)
-       })(window, document,'script','https://mc.yandex.ru/metrika/tag.js?id=109512457', 'ym');
-
-       ym(109512457, 'init', {ssr:true, webvisor:true, clickmap:true, ecommerce:"dataLayer", referrer: document.referrer, url: location.href, accurateTrackBounce:true, trackLinks:true});
+      window.addEventListener('load', function() {
+        (function(m,e,t,r,i,k,a){
+            m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
+            m[i].l=1*new Date();
+            for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}
+            k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)
+        })(window, document,'script','https://mc.yandex.ru/metrika/tag.js?id=109512457', 'ym');
+        ym(109512457, 'init', {ssr:true, webvisor:true, clickmap:true, ecommerce:"dataLayer", referrer: document.referrer, url: location.href, accurateTrackBounce:true, trackLinks:true});
+      });
     </script>
     <noscript><div><img src="https://mc.yandex.ru/watch/109512457" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
     <!-- /Yandex.Metrika counter -->
@@ -122,17 +111,6 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site || 'https://vixtube.
     </script>
   </head>
   <body class="flex flex-col min-h-screen bg-slate-950 text-slate-100 selection:bg-rose-500 selection:text-white pb-16 md:pb-0">
-    <!-- ExoClick Zone 5938548 (magsrv) -->
-    <ins class="eas6a97888e31" data-zoneid="5938548"></ins>
-
-    <!-- ExoClick Zone 5938540 (pemsrv) -->
-    <ins class="eas6a97888e35" data-zoneid="5938540"></ins>
-
-    <!-- ExoClick Multi Format Zone 5942318 -->
-    <ins class="eas6a97888e38" data-zoneid="5942318"></ins>
-
-    <!-- ExoClick Sticky Banner Zone 5942314 -->
-    <ins class="eas6a97888e17" data-zoneid="5942314"></ins>
 
     <!-- Header with Glassmorphic Navbar -->
     <header class="sticky top-0 z-40 w-full border-b border-slate-900 bg-slate-950/80 backdrop-blur-md relative">
@@ -185,10 +163,7 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site || 'https://vixtube.
       <slot />
     </main>
 
-    <!-- ExoClick Recommendation Widget Zone 5938550 – between content and footer -->
-    <div class="mx-auto max-w-7xl px-4 py-4">
-      <ins class="eas6a97888e20" data-zoneid="5938550"></ins>
-    </div>
+
 
     <!-- Footer -->
     <footer class="border-t border-slate-900 bg-slate-950 py-10 mt-12 text-sm text-slate-500 pb-28 md:pb-10">
@@ -239,30 +214,30 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site || 'https://vixtube.
     </footer>
 
     <!-- Mobile Bottom Navigation Bar (Floating capsule, premium glassmorphism) -->
-    <nav class="fixed bottom-4 left-4 right-4 z-40 md:hidden bg-slate-950/90 backdrop-blur-xl border border-slate-800/80 rounded-2xl max-w-md mx-auto px-6 py-2.5 flex justify-around items-center text-xs font-semibold shadow-2xl shadow-rose-950/10">
-      <a href="/" class="flex flex-col items-center space-y-1 text-slate-400 hover:text-rose-500 transition-all active:scale-95">
+    <nav class="fixed bottom-4 left-4 right-4 z-40 md:hidden bg-slate-950/90 backdrop-blur-xl border border-slate-800/80 rounded-2xl max-w-md mx-auto px-4 py-1 flex justify-around items-center text-xs font-semibold shadow-2xl shadow-rose-950/10">
+      <a href="/" aria-label="Home page" class="flex flex-col items-center justify-center space-y-0.5 text-slate-400 hover:text-rose-500 transition-all active:scale-95 min-h-[48px] min-w-[48px] p-1">
         <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
         </svg>
-        <span class="text-[9px]">Home</span>
+        <span class="text-[10px]">Home</span>
       </a>
-      <a href="/popular" class="flex flex-col items-center space-y-1 text-slate-400 hover:text-rose-500 transition-all active:scale-95">
+      <a href="/popular" aria-label="Popular videos" class="flex flex-col items-center justify-center space-y-0.5 text-slate-400 hover:text-rose-500 transition-all active:scale-95 min-h-[48px] min-w-[48px] p-1">
         <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
         </svg>
-        <span class="text-[9px]">Popular</span>
+        <span class="text-[10px]">Popular</span>
       </a>
-      <a href="/featured" class="flex flex-col items-center space-y-1 text-slate-400 hover:text-rose-500 transition-all active:scale-95">
+      <a href="/featured" aria-label="Featured videos" class="flex flex-col items-center justify-center space-y-0.5 text-slate-400 hover:text-rose-500 transition-all active:scale-95 min-h-[48px] min-w-[48px] p-1">
         <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.907c.961 0 1.36 1.248.588 1.81l-3.97 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.971-2.888a1 1 0 00-1.176 0l-3.97 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.97-2.888c-.777-.562-.379-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
         </svg>
-        <span class="text-[9px]">Featured</span>
+        <span class="text-[10px]">Featured</span>
       </a>
-      <a href="https://go.mavrtracktor.com?userId=763fd084690f07b764ddde5c15c706c218c35157018d3d183790570e22385ed7" target="_blank" rel="noopener" class="flex flex-col items-center space-y-1 text-rose-500 hover:text-rose-400 transition-all active:scale-95 animate-pulse">
+      <a href="https://go.mavrtracktor.com?userId=763fd084690f07b764ddde5c15c706c218c35157018d3d183790570e22385ed7" target="_blank" rel="noopener" aria-label="Live adult webcam models" class="flex flex-col items-center justify-center space-y-0.5 text-rose-500 hover:text-rose-400 transition-all active:scale-95 animate-pulse min-h-[48px] min-w-[48px] p-1">
         <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
         </svg>
-        <span class="text-[9px] font-extrabold">Live Models</span>
+        <span class="text-[10px] font-extrabold">Live Models</span>
       </a>
     </nav>
 
@@ -335,18 +310,5 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site || 'https://vixtube.
       });
     </script>
 
-    <!-- AdBlock Popunder Recovery + ExoClick Ad Providers (Asynchronously deferred to maximize page speed & LCP) -->
-    <script async type="application/javascript" src="https://a.magsrv.com/ad-provider.js"></script>
-    <script async type="application/javascript" src="https://a.pemsrv.com/ad-provider.js"></script>
-    <script is:inline src="/popunder-adblock.js"></script>
-    <script is:inline>
-      window.AdProvider = window.AdProvider || [];
-      // Trigger all 5 registered ad zones (4 top slots + 1 recommendation widget)
-      window.AdProvider.push({"serve": {}});
-      window.AdProvider.push({"serve": {}});
-      window.AdProvider.push({"serve": {}});
-      window.AdProvider.push({"serve": {}});
-      window.AdProvider.push({"serve": {}});
-    </script>
   </body>
 </html>
