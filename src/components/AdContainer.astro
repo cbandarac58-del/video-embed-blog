@@ -5,39 +5,71 @@ interface Props {
 }
 
 const { slotType, className = "" } = Astro.props;
-
-// Define specific styles to reserve exact space (preventing CLS)
-const slotConfigs = {
-  banner_728x90: {
-    dimensions: "w-full max-w-[728px] h-[90px]",
-    zoneId: "5938492",
-  },
-  banner_300x250: {
-    dimensions: "w-[300px] h-[250px]",
-    zoneId: "5938492",
-  },
-  banner_468x60: {
-    dimensions: "w-full max-w-[468px] h-[60px]",
-    zoneId: "5938504",
-  },
-};
-
-const config = slotConfigs[slotType];
 ---
 
 <div class={`flex flex-col items-center justify-center my-4 mx-auto ${className}`}>
-  <!-- Label indicating sponsored content -->
-  <span class="text-[9px] uppercase tracking-widest text-slate-700 mb-1">Sponsored</span>
+  <span class="text-[9px] uppercase tracking-widest text-slate-600 mb-1">Advertisement</span>
   
-  <!-- CLS-free Ad Container reserves exact dimensions before ad loads -->
-  <div 
-    class={`relative flex items-center justify-center bg-slate-950 rounded overflow-hidden ${config.dimensions}`}
-  >
-    <!-- Skeleton pulse while ad loads -->
-    <div class="absolute inset-0 bg-slate-900/30 animate-pulse -z-10"></div>
+  {slotType === 'banner_728x90' && (
+    <div class="flex items-center justify-center min-h-[90px]">
+      {/* Desktop 728x90 Leaderboard */}
+      <div class="hidden sm:flex flex-col items-center justify-center min-w-[728px] min-h-[90px]">
+        <script type="text/javascript" is:inline>
+          atOptions = {
+            'key' : '8c4e23c00b81127a6fde9dba941e11e5',
+            'format' : 'iframe',
+            'height' : 90,
+            'width' : 728,
+            'params' : {}
+          };
+        </script>
+        <script type="text/javascript" is:inline src="https://toleranceteaminadequate.com/8c4e23c00b81127a6fde9dba941e11e5/invoke.js"></script>
+      </div>
 
-    <!-- ExoClick Banner Zone -->
-    <ins class="eas6a97888e2" data-zoneid={config.zoneId}></ins>
-    <script>(AdProvider = window.AdProvider || []).push({"serve": {}});</script>
-  </div>
+      {/* Mobile 320x50 Banner */}
+      <div class="flex sm:hidden flex-col items-center justify-center min-w-[320px] min-h-[50px]">
+        <script type="text/javascript" is:inline>
+          atOptions = {
+            'key' : 'd67ac15ccbaca7ef4f747484e4bcc494',
+            'format' : 'iframe',
+            'height' : 50,
+            'width' : 320,
+            'params' : {}
+          };
+        </script>
+        <script type="text/javascript" is:inline src="https://toleranceteaminadequate.com/d67ac15ccbaca7ef4f747484e4bcc494/invoke.js"></script>
+      </div>
+    </div>
+  )}
+
+  {slotType === 'banner_300x250' && (
+    <div class="flex flex-col items-center justify-center min-w-[300px] min-h-[250px]">
+      <script type="text/javascript" is:inline>
+        atOptions = {
+          'key' : '167b0e427f30e0d912433bbf5431e871',
+          'format' : 'iframe',
+          'height' : 250,
+          'width' : 300,
+          'params' : {}
+        };
+      </script>
+      <script type="text/javascript" is:inline src="https://toleranceteaminadequate.com/167b0e427f30e0d912433bbf5431e871/invoke.js"></script>
+    </div>
+  )}
+
+  {slotType === 'banner_468x60' && (
+    <div class="flex flex-col items-center justify-center min-w-[468px] min-h-[60px]">
+      <script type="text/javascript" is:inline>
+        atOptions = {
+          'key' : '1c0ea900385fcaf5777c0ca70132e038',
+          'format' : 'iframe',
+          'height' : 60,
+          'width' : 468,
+          'params' : {}
+        };
+      </script>
+      <script type="text/javascript" is:inline src="https://toleranceteaminadequate.com/1c0ea900385fcaf5777c0ca70132e038/invoke.js"></script>
+    </div>
+  )}
 </div>
+
