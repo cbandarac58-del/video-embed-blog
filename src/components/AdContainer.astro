@@ -11,64 +11,52 @@ const { slotType, className = "" } = Astro.props;
   <span class="text-[9px] uppercase tracking-widest text-slate-600 mb-1">Advertisement</span>
   
   {slotType === 'banner_728x90' && (
-    <div class="flex items-center justify-center min-h-[90px]">
+    <div class="flex items-center justify-center">
       {/* Desktop 728x90 Leaderboard */}
       <div class="hidden sm:flex flex-col items-center justify-center min-w-[728px] min-h-[90px]">
-        <script type="text/javascript" is:inline>
-          atOptions = {
-            'key' : '8c4e23c00b81127a6fde9dba941e11e5',
-            'format' : 'iframe',
-            'height' : 90,
-            'width' : 728,
-            'params' : {}
-          };
-        </script>
-        <script type="text/javascript" is:inline src="https://toleranceteaminadequate.com/8c4e23c00b81127a6fde9dba941e11e5/invoke.js"></script>
+        <iframe 
+          srcdoc="<!DOCTYPE html><html><head><style>html,body{margin:0;padding:0;overflow:hidden;background:transparent;display:flex;justify-content:center;align-items:center;}</style></head><body><script type='text/javascript'>atOptions={'key':'8c4e23c00b81127a6fde9dba941e11e5','format':'iframe','height':90,'width':728,'params':{}};</script><script type='text/javascript' src='https://toleranceteaminadequate.com/8c4e23c00b81127a6fde9dba941e11e5/invoke.js'></script></body></html>" 
+          width="728" 
+          height="90" 
+          style="border:none;overflow:hidden;" 
+          scrolling="no"
+        ></iframe>
       </div>
 
       {/* Mobile 320x50 Banner */}
       <div class="flex sm:hidden flex-col items-center justify-center min-w-[320px] min-h-[50px]">
-        <script type="text/javascript" is:inline>
-          atOptions = {
-            'key' : 'd67ac15ccbaca7ef4f747484e4bcc494',
-            'format' : 'iframe',
-            'height' : 50,
-            'width' : 320,
-            'params' : {}
-          };
-        </script>
-        <script type="text/javascript" is:inline src="https://toleranceteaminadequate.com/d67ac15ccbaca7ef4f747484e4bcc494/invoke.js"></script>
+        <iframe 
+          srcdoc="<!DOCTYPE html><html><head><style>html,body{margin:0;padding:0;overflow:hidden;background:transparent;display:flex;justify-content:center;align-items:center;}</style></head><body><script type='text/javascript'>atOptions={'key':'d67ac15ccbaca7ef4f747484e4bcc494','format':'iframe','height':50,'width':320,'params':{}};</script><script type='text/javascript' src='https://toleranceteaminadequate.com/d67ac15ccbaca7ef4f747484e4bcc494/invoke.js'></script></body></html>" 
+          width="320" 
+          height="50" 
+          style="border:none;overflow:hidden;" 
+          scrolling="no"
+        ></iframe>
       </div>
     </div>
   )}
 
   {slotType === 'banner_300x250' && (
     <div class="flex flex-col items-center justify-center min-w-[300px] min-h-[250px]">
-      <script type="text/javascript" is:inline>
-        atOptions = {
-          'key' : '167b0e427f30e0d912433bbf5431e871',
-          'format' : 'iframe',
-          'height' : 250,
-          'width' : 300,
-          'params' : {}
-        };
-      </script>
-      <script type="text/javascript" is:inline src="https://toleranceteaminadequate.com/167b0e427f30e0d912433bbf5431e871/invoke.js"></script>
+      <iframe 
+        srcdoc="<!DOCTYPE html><html><head><style>html,body{margin:0;padding:0;overflow:hidden;background:transparent;display:flex;justify-content:center;align-items:center;}</style></head><body><script type='text/javascript'>atOptions={'key':'167b0e427f30e0d912433bbf5431e871','format':'iframe','height':250,'width':300,'params':{}};</script><script type='text/javascript' src='https://toleranceteaminadequate.com/167b0e427f30e0d912433bbf5431e871/invoke.js'></script></body></html>" 
+        width="300" 
+        height="250" 
+        style="border:none;overflow:hidden;" 
+        scrolling="no"
+      ></iframe>
     </div>
   )}
 
   {slotType === 'banner_468x60' && (
     <div class="flex flex-col items-center justify-center min-w-[468px] min-h-[60px]">
-      <script type="text/javascript" is:inline>
-        atOptions = {
-          'key' : '1c0ea900385fcaf5777c0ca70132e038',
-          'format' : 'iframe',
-          'height' : 60,
-          'width' : 468,
-          'params' : {}
-        };
-      </script>
-      <script type="text/javascript" is:inline src="https://toleranceteaminadequate.com/1c0ea900385fcaf5777c0ca70132e038/invoke.js"></script>
+      <iframe 
+        srcdoc="<!DOCTYPE html><html><head><style>html,body{margin:0;padding:0;overflow:hidden;background:transparent;display:flex;justify-content:center;align-items:center;}</style></head><body><script type='text/javascript'>atOptions={'key':'1c0ea900385fcaf5777c0ca70132e038','format':'iframe','height':60,'width':468,'params':{}};</script><script type='text/javascript' src='https://toleranceteaminadequate.com/1c0ea900385fcaf5777c0ca70132e038/invoke.js'></script></body></html>" 
+        width="468" 
+        height="60" 
+        style="border:none;overflow:hidden;" 
+        scrolling="no"
+      ></iframe>
     </div>
   )}
 </div>
