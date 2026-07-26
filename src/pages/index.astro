@@ -131,11 +131,11 @@ function getCardGradient(slug: string) {
 
     <!-- Mobile Categories Horizontal Scroll -->
     <div class="mb-6">
-      <h2 class="text-xs font-bold uppercase tracking-widest text-slate-500 mb-3">Categories</h2>
+      <h2 class="text-xs font-bold uppercase tracking-widest text-slate-400 mb-3">Categories</h2>
       <div class="flex flex-wrap gap-2">
         <a 
           href="/" 
-          class={`rounded-full px-4 py-1.5 text-xs font-semibold whitespace-nowrap border transition-all ${
+          class={`rounded-full px-4 py-2 text-xs font-semibold whitespace-nowrap border min-h-[44px] inline-flex items-center transition-all ${
             !activeCategory ? 'bg-rose-600 border-rose-500 text-white shadow-lg shadow-rose-600/20' : 'bg-slate-900 border-slate-800 text-slate-300 hover:border-slate-700'
           }`}
         >
@@ -146,7 +146,7 @@ function getCardGradient(slug: string) {
           return (
             <a 
               href={`/category/${catSlug}`}
-              class="rounded-full px-4 py-1.5 text-xs font-semibold whitespace-nowrap border bg-slate-900 border-slate-800 text-slate-300 hover:border-slate-700 transition-all"
+              class="rounded-full px-4 py-2 text-xs font-semibold whitespace-nowrap border bg-slate-900 border-slate-800 text-slate-300 hover:border-slate-700 min-h-[44px] inline-flex items-center transition-all"
             >
               {category}
             </a>
@@ -169,28 +169,28 @@ function getCardGradient(slug: string) {
         ) : (
           <span>Showing <span class="text-rose-400 font-medium">All Trending</span> Videos</span>
         )}
-        <span class="text-xs text-slate-600 ml-1">({filteredVideos.length} items)</span>
+        <span class="text-xs text-slate-400 ml-1">({filteredVideos.length} items)</span>
       </div>
 
       <!-- Sorting Controls -->
       <div class="flex items-center space-x-2">
-        <span class="text-xs text-slate-500 font-medium">Sort By:</span>
+        <span class="text-xs text-slate-400 font-medium">Sort By:</span>
         <div class="inline-flex rounded-lg bg-slate-900 p-0.5 border border-slate-800 text-xs">
           <a 
             href="/"
-            class="rounded-md px-3 py-1 font-medium transition-colors bg-slate-800 text-white"
+            class="rounded-md px-3 py-1.5 font-medium transition-colors bg-slate-800 text-white min-h-[40px] inline-flex items-center"
           >
             Recent
           </a>
           <a 
             href="/popular"
-            class="rounded-md px-3 py-1 font-medium transition-colors text-slate-400 hover:text-slate-200"
+            class="rounded-md px-3 py-1.5 font-medium transition-colors text-slate-400 hover:text-slate-200 min-h-[40px] inline-flex items-center"
           >
             Most Viewed
           </a>
           <a 
             href="/featured"
-            class="rounded-md px-3 py-1 font-medium transition-colors text-slate-400 hover:text-slate-200"
+            class="rounded-md px-3 py-1.5 font-medium transition-colors text-slate-400 hover:text-slate-200 min-h-[40px] inline-flex items-center"
           >
             Top Rated
           </a>
@@ -205,15 +205,19 @@ function getCardGradient(slug: string) {
           ✦
         </div>
         <h3 class="text-lg font-bold text-slate-200">No Videos Found</h3>
-        <p class="text-xs text-slate-500 mt-1 max-w-sm">
+        <p class="text-xs text-slate-400 mt-1 max-w-sm">
           Try adjusting your keywords, or add new video entries directly to the centralized database configuration.
         </p>
       </div>
     ) : (
       <div id="video-grid" class={`grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 ${isDefaultHome ? 'home-rotator' : ''}`}>
-        {/* Render Video Cards */}
-        {pagedVideos.map((video) => (
-          <VideoCard video={video} />
+        {/* Render Video Cards with LCP Optimization (eager load top 4 cards) */}
+        {pagedVideos.map((video, idx) => (
+          <VideoCard 
+            video={video} 
+            loading={idx < 4 ? "eager" : "lazy"} 
+            fetchpriority={idx < 4 ? "high" : "auto"} 
+          />
         ))}
       </div>
     )}

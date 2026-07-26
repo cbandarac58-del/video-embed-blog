@@ -146,8 +146,12 @@ const pageRange = Array.from({ length: totalPages }, (_, i) => i + 1).filter(p =
       </div>
     ) : (
       <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-        {pagedVideos.map((video) => (
-          <VideoCard video={video} />
+        {pagedVideos.map((video, idx) => (
+          <VideoCard 
+            video={video} 
+            loading={idx < 4 ? "eager" : "lazy"} 
+            fetchpriority={idx < 4 ? "high" : "auto"} 
+          />
         ))}
       </div>
     )}
