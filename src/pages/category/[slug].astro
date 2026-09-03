@@ -14,7 +14,19 @@ export async function getStaticPaths() {
       .replace(/^-+/, '')
       .replace(/-+$/, '');
 
-  const allCategories = [...new Set(allVideos.map(v => v.data.category))].filter(Boolean).sort((a, b) => {
+  // Category Map එකක් හරහා Duplicate Categories එකට Merge කිරීම
+  const categoryMap = new Map<string, string>();
+  allVideos.forEach(v => {
+    if (v.data.category) {
+      const lower = v.data.category.toLowerCase();
+      if (!categoryMap.has(lower)) {
+        const formattedName = v.data.category.charAt(0).toUpperCase() + v.data.category.slice(1);
+        categoryMap.set(lower, formattedName);
+      }
+    }
+  });
+
+  const allCategories = Array.from(categoryMap.values()).sort((a, b) => {
     if (a === 'Indian') return -1;
     if (b === 'Indian') return 1;
     return a.localeCompare(b);
@@ -22,9 +34,10 @@ export async function getStaticPaths() {
 
   const PER_PAGE = 40;
 
-  return allCategories.map((category) => {
+  return Array.from(categoryMap.entries()).map(([lowerCat, category]) => {
+    // Case-insensitive Filter මගින් stepsister සහ Stepsister දෙකම එකතු කිරීම
     const categoryVideos = allVideos
-      .filter(v => v.data.category === category)
+      .filter(v => v.data.category && v.data.category.toLowerCase() === lowerCat)
       .sort((a, b) => new Date(b.data.dateAdded).getTime() - new Date(a.data.dateAdded).getTime());
 
     const totalVideos = categoryVideos.length;
