@@ -21,12 +21,24 @@ try {
   console.log("No videos found in content layer yet.", e);
 }
 
-// Extract unique categories and tags for filter UI
-const categories = [...new Set(videos.map(v => v.data.category))].filter(Boolean).sort((a, b) => {
+// Case-insensitive Category Map එකක් මගින් Duplicate Categories Merge කිරීම
+const categoryMap = new Map<string, string>();
+videos.forEach(v => {
+  if (v.data.category) {
+    const lower = v.data.category.toLowerCase();
+    if (!categoryMap.has(lower)) {
+      const formattedName = v.data.category.charAt(0).toUpperCase() + v.data.category.slice(1);
+      categoryMap.set(lower, formattedName);
+    }
+  }
+});
+
+const categories = Array.from(categoryMap.values()).sort((a, b) => {
   if (a === 'Indian') return -1;
   if (b === 'Indian') return 1;
   return a.localeCompare(b);
 });
+
 const allTags = [...new Set(videos.flatMap(v => v.data.tags))].filter(Boolean).slice(0, 15);
 
 // Apply filters
@@ -117,8 +129,6 @@ function getCardGradient(slug: string) {
       <p class="mx-auto mt-4 max-w-2xl text-sm sm:text-base text-slate-400">
         Discover the highest-rated amateur, desi bhabhi, stepsister, and hardcore streaming adult videos. Clean, responsive embeds optimized for all mobile devices.
       </p>
-      
-
     </div>
   </section>
 
@@ -127,7 +137,6 @@ function getCardGradient(slug: string) {
     
     <!-- Leaderboard Ad Banner -->
     <AdContainer slotType="banner_728x90" className="mb-6" />
-
 
     <!-- Mobile Categories Horizontal Scroll -->
     <div class="mb-6">
@@ -211,7 +220,6 @@ function getCardGradient(slug: string) {
       </div>
     ) : (
       <div id="video-grid" class={`grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 ${isDefaultHome ? 'home-rotator' : ''}`}>
-        {/* Render Video Cards with LCP Optimization (eager load top 4 cards) */}
         {pagedVideos.map((video, idx) => (
           <VideoCard 
             video={video} 
@@ -231,7 +239,7 @@ function getCardGradient(slug: string) {
             
             if (!activeCategory && !activeTag && !searchQuery && (window.location.pathname === '/' || window.location.pathname === '/index.html')) {
               const visits = parseInt(localStorage.getItem('vix_home_visits') || '0', 10);
-              const activeGroup = visits % 3; // 0, 1, or 2
+              const activeGroup = visits % 3;
               
               const grid = document.getElementById('video-grid');
               if (grid) {
@@ -244,10 +252,8 @@ function getCardGradient(slug: string) {
                     card.style.display = 'none';
                   }
                 });
-                // Remove class to disable CSS default override
                 grid.classList.remove('home-rotator');
               }
-              // Increment visit index for next visit
               localStorage.setItem('vix_home_visits', (visits + 1).toString());
             }
           } catch (e) {
@@ -262,13 +268,12 @@ function getCardGradient(slug: string) {
         }
       </style>
 
-    {/* Pagination Controls — smart truncated */}
+    {/* Pagination Controls */}
     {totalPages > 1 && (() => {
       const currentPage = 1;
-      const delta = 2; // pages around current
+      const delta = 2;
       const pages: (number | '...')[] = [];
 
-      // Always show first page
       pages.push(1);
 
       const rangeStart = Math.max(2, currentPage - delta);
@@ -278,7 +283,6 @@ function getCardGradient(slug: string) {
       for (let i = rangeStart; i <= rangeEnd; i++) pages.push(i);
       if (rangeEnd < totalPages - 1) pages.push('...');
 
-      // Always show last page
       if (totalPages > 1) pages.push(totalPages);
 
       return (
@@ -308,9 +312,7 @@ function getCardGradient(slug: string) {
       );
     })()}
 
-    {/* Keep original closing if-block — remove extra closing */}
-    {filteredVideos.length === 0 && (<span></span>
-    )}
+    {filteredVideos.length === 0 && (<span></span>)}
 
     <!-- Footer Tag Cloud -->
     <div class="mt-16 border-t border-slate-900 pt-8">
@@ -329,6 +331,7 @@ function getCardGradient(slug: string) {
         })}
       </div>
     </div>
+    
     <script is:inline>
       document.addEventListener('DOMContentLoaded', () => {
         const searchInputs = document.querySelectorAll('input[name="search"]');
@@ -355,13 +358,10 @@ function getCardGradient(slug: string) {
 
         let videosData = [];
 
-        // Fetch the index once
         fetch('/videos.json')
           .then(res => res.json())
           .then(data => {
             videosData = data;
-            
-            // Check URL for search parameter (e.g. ?search=some-term)
             const params = new URLSearchParams(window.location.search);
             const searchParam = params.get('search');
             if (searchParam) {
@@ -371,7 +371,6 @@ function getCardGradient(slug: string) {
           })
           .catch(err => console.error('Error fetching search index:', err));
 
-        // Support typing in search boxes
         searchInputs.forEach(input => {
           const form = input.closest('form');
           if (form) {
@@ -389,7 +388,6 @@ function getCardGradient(slug: string) {
         function performSearch(query) {
           const cleanQuery = query.trim().toLowerCase();
           
-          // Update URL search parameter without reloading page
           const url = new URL(window.location.href);
           if (cleanQuery) {
             url.searchParams.set('search', query);
@@ -399,24 +397,20 @@ function getCardGradient(slug: string) {
           window.history.replaceState({}, '', url.toString());
 
           if (!cleanQuery) {
-            // Restore default view (first 40 videos)
             renderVideos(videosData.slice(0, 40));
             if (paginationContainer) paginationContainer.classList.remove('hidden');
             if (filterStatus) filterStatus.innerHTML = `Showing <span class="text-rose-400 font-medium">All Trending</span> Videos <span class="text-xs text-slate-600 ml-1">(${videosData.length} items)</span>`;
             return;
           }
 
-          // Filter local search index
           const results = videosData.filter(v => 
             v.title.toLowerCase().includes(cleanQuery) || 
             v.category.toLowerCase().includes(cleanQuery) ||
             v.tags.some(t => t.toLowerCase().includes(cleanQuery))
           );
 
-          // Hide pagination controls during search
           if (paginationContainer) paginationContainer.classList.add('hidden');
 
-          // Update header status info
           if (filterStatus) {
             filterStatus.innerHTML = `Search results for "<span class="text-rose-400 font-medium">${query}</span>" <span class="text-xs text-slate-600 ml-1">(${results.length} items)</span>`;
           }
@@ -433,7 +427,7 @@ function getCardGradient(slug: string) {
           }
 
           videoGrid.classList.remove('hidden');
-          noResultsDiv.classList.add('hidden');
+          noResultsDiv.add('hidden');
 
           const getCardGradient = (slug) => {
             const hash = slug.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
