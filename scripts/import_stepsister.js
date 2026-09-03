@@ -55,55 +55,49 @@ function getRandomViews() {
 
 function getRandomRating() { return Math.floor(Math.random() * 9) + 87; }
 
-async function scrapeStepsisterVideos() {
-  console.log(`🌐 Fetching Stepsister RSS feed...`);
+async function scrapeStepsisterVideos(targetLimit = 500) {
+  console.log(`🌐 Fetching ${targetLimit} Stepsister videos via proxy API...`);
   const scraped = [];
-  
-  // High rate limits bypassed by fetching RSS feed
-  const rssUrls = [
-    'https://www.xvideos.com/rss/rss.xml',
-    'https://www.xvideos.com/c/rss/Stepsister-112'
-  ];
+  let page = 1;
 
-  for (const url of rssUrls) {
+  while (scraped.length < targetLimit && page <= 25) {
     try {
-      const res = await axios.get(url, {
-        headers: { 'User-Agent': 'Mozilla/5.0' },
-        timeout: 10000
-      });
+      // Using EPORNER / XVideos free json middleware to bypass Cloudflare 429
+      const url = `https://eporner-api.vercel.app/api/search?q=stepsister&page=${page}&per_page=30`;
+      const res = await axios.get(url, { timeout: 15000 });
+      const videos = res.data?.videos || res.data || [];
 
-      const xml = res.data;
-      const itemRegex = /<item>(.*?)<\/item>/gs;
-      let match;
-
-      while ((match = itemRegex.exec(xml)) !== null) {
-        const itemContent = match[1];
-        
-        const titleMatch = /<title>(.*?)<\/title>/.exec(itemContent);
-        const linkMatch = /<link>(.*?)<\/link>/.exec(itemContent);
-        const thumbMatch = /<media:thumbnail url="([^"]+)"/.exec(itemContent) || /src="([^"]+)"/.exec(itemContent);
-
-        if (titleMatch && linkMatch) {
-          const rawTitle = titleMatch[1].replace('<![CDATA[', '').replace(']]>', '');
-          const link = linkMatch[1];
-          const idMatch = /\/video\.?([a-zA-Z0-9]+)\//.exec(link) || /\/video(\d+)\//.exec(link);
-          
-          if (idMatch) {
-            const videoId = idMatch[1];
-            scraped.push({
-              rawTitle,
-              embedUrl: `https://www.xvideos.com/embedframe/${videoId}`,
-              thumbnailUrl: thumbMatch ? thumbMatch[1] : '',
-              keywords: rawTitle
-            });
-          }
-        }
+      if (!Array.isArray(videos) || videos.length === 0) {
+        console.log(`No more videos found at page ${page}`);
+        break;
       }
+
+      let addedThisPage = 0;
+      for (const v of videos) {
+        const id = v.id || v.embed?.split('/embed/')[1] || v.embedframe?.split('/embedframe/')[1];
+        const rawTitle = v.title || v.tf;
+        const thumbnailUrl = v.default_thumb?.src || v.thumbnail || v.thumb;
+
+        if (rawTitle) {
+          scraped.push({
+            rawTitle,
+            embedUrl: id ? `https://www.xvideos.com/embedframe/${id}` : (v.embed || v.embedUrl || ''),
+            thumbnailUrl: thumbnailUrl || '',
+            keywords: v.keywords || rawTitle
+          });
+          addedThisPage++;
+        }
+        if (scraped.length >= targetLimit) break;
+      }
+
+      console.log(`Page ${page}: Fetched ${addedThisPage} videos (Total: ${scraped.length})`);
+      page++;
+      await new Promise(r => setTimeout(r, 500));
     } catch (e) {
-      console.log(`Error fetching RSS: ${e.message}`);
+      console.log(`Page ${page} failed: ${e.message}. Trying next page...`);
+      page++;
     }
   }
-
   return scraped;
 }
 
@@ -118,13 +112,13 @@ async function main() {
   const existingSlugs = new Set(existing.map(v => v.slug));
   const existingEmbeds = new Set(existing.map(v => v.embedUrl));
 
-  const rawVideos = await scrapeStepsisterVideos();
-  console.log(`Total raw fetched via RSS: ${rawVideos.length}`);
+  const rawVideos = await scrapeStepsisterVideos(500);
+  console.log(`Total raw fetched: ${rawVideos.length}`);
 
   const newEntries = [];
 
   for (const raw of rawVideos) {
-    if (existingEmbeds.has(raw.embedUrl)) continue;
+    if (!raw.embedUrl || existingEmbeds.has(raw.embedUrl)) continue;
 
     const keyword = extractKeyword(raw.rawTitle || '');
     const titleTpl = STEPSISTER_TITLES[Math.floor(Math.random() * STEPSISTER_TITLES.length)];
@@ -164,4 +158,4 @@ async function main() {
   console.log(`✅ Successfully added ${newEntries.length} new videos to database.json.`);
 }
 
-main().catch(e => console.error("Fatal:", e));
+main().catch(e => console.error("Fatal error:", e));
