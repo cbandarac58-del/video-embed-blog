@@ -2,7 +2,6 @@ import axios from 'axios';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { exec } from 'child_process';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -61,26 +60,49 @@ async function scrapeStepsisterVideos(targetLimit = 500) {
   const scraped = [];
   let page = 0;
 
-  while (scraped.length < targetLimit && page < 30) {
+  while (scraped.length < targetLimit && page < 40) {
     try {
-      const url = `https://www.xvideos.com/api/videosearch/v3?k=stepsister&p=${page}&sort=relevance`;
-      const res = await axios.get(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
-      const videos = res.data?.videos || [];
-      if (videos.length === 0) break;
+      const url = `https://www.xvideos.com/?k=stepsister&p=${page}`;
+      const res = await axios.get(url, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+          'Accept-Language': 'en-US,en;q=0.9'
+        },
+        timeout: 10000
+      });
 
-      for (const v of videos) {
-        if (!v.id) continue;
-        scraped.push({
-          rawTitle: v.tf || v.t || 'Hot Stepsister',
-          embedUrl: `https://www.xvideos.com/embedframe/${v.id}`,
-          thumbnailUrl: v.u || v.i || '',
-          keywords: v.k ? v.k.join(',') : ''
-        });
+      const html = res.data;
+      const videoBlockRegex = /data-idvideo="(\d+)".*?title="([^"]+)".*?data-src="([^"]+)"/gs;
+      let match;
+      let countOnPage = 0;
+
+      while ((match = videoBlockRegex.exec(html)) !== null) {
+        const id = match[1];
+        const rawTitle = match[2];
+        const thumbnailUrl = match[3];
+
+        if (id && rawTitle) {
+          scraped.push({
+            rawTitle,
+            embedUrl: `https://www.xvideos.com/embedframe/${id}`,
+            thumbnailUrl,
+            keywords: rawTitle
+          });
+          countOnPage++;
+        }
         if (scraped.length >= targetLimit) break;
       }
+
+      console.log(`Page ${page}: Scraped ${countOnPage} videos (Total: ${scraped.length})`);
+      if (countOnPage === 0) {
+        page++;
+        continue;
+      }
       page++;
+      await new Promise(r => setTimeout(r, 1000)); // Rate limiting delay
     } catch (e) {
-      break;
+      console.log(`Error on page ${page}: ${e.message}. Retrying next page...`);
+      page++;
     }
   }
   return scraped;
@@ -88,11 +110,18 @@ async function scrapeStepsisterVideos(targetLimit = 500) {
 
 async function main() {
   const dbPath = path.resolve(__dirname, '../src/content/videos/database.json');
-  const existing = JSON.parse(fs.readFileSync(dbPath, 'utf-8'));
+  let existing = [];
+  
+  if (fs.existsSync(dbPath)) {
+    existing = JSON.parse(fs.readFileSync(dbPath, 'utf-8'));
+  }
+
   const existingSlugs = new Set(existing.map(v => v.slug));
   const existingEmbeds = new Set(existing.map(v => v.embedUrl));
 
   const rawVideos = await scrapeStepsisterVideos(500);
+  console.log(`Total raw fetched: ${rawVideos.length}`);
+
   const newEntries = [];
 
   for (const raw of rawVideos) {
@@ -126,11 +155,14 @@ async function main() {
     });
   }
 
-  if (newEntries.length === 0) return;
+  if (newEntries.length === 0) {
+    console.log("No new unique entries to add.");
+    return;
+  }
 
   const updated = [...newEntries, ...existing];
   fs.writeFileSync(dbPath, JSON.stringify(updated, null, 2), 'utf-8');
-  console.log(`✅ Added ${newEntries.length} new videos.`);
+  console.log(`✅ Successfully added ${newEntries.length} new videos to database.json.`);
 }
 
-main().catch(e => console.error(e));
+main().catch(e => console.error("Fatal:", e));
