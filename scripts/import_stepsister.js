@@ -55,56 +55,55 @@ function getRandomViews() {
 
 function getRandomRating() { return Math.floor(Math.random() * 9) + 87; }
 
-async function scrapeStepsisterVideos(targetLimit = 500) {
-  console.log(`🌐 Fetching ${targetLimit} Stepsister videos...`);
+async function scrapeStepsisterVideos() {
+  console.log(`🌐 Fetching Stepsister RSS feed...`);
   const scraped = [];
-  let page = 0;
+  
+  // High rate limits bypassed by fetching RSS feed
+  const rssUrls = [
+    'https://www.xvideos.com/rss/rss.xml',
+    'https://www.xvideos.com/c/rss/Stepsister-112'
+  ];
 
-  while (scraped.length < targetLimit && page < 40) {
+  for (const url of rssUrls) {
     try {
-      const url = `https://www.xvideos.com/?k=stepsister&p=${page}`;
       const res = await axios.get(url, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-          'Accept-Language': 'en-US,en;q=0.9'
-        },
+        headers: { 'User-Agent': 'Mozilla/5.0' },
         timeout: 10000
       });
 
-      const html = res.data;
-      const videoBlockRegex = /data-idvideo="(\d+)".*?title="([^"]+)".*?data-src="([^"]+)"/gs;
+      const xml = res.data;
+      const itemRegex = /<item>(.*?)<\/item>/gs;
       let match;
-      let countOnPage = 0;
 
-      while ((match = videoBlockRegex.exec(html)) !== null) {
-        const id = match[1];
-        const rawTitle = match[2];
-        const thumbnailUrl = match[3];
+      while ((match = itemRegex.exec(xml)) !== null) {
+        const itemContent = match[1];
+        
+        const titleMatch = /<title>(.*?)<\/title>/.exec(itemContent);
+        const linkMatch = /<link>(.*?)<\/link>/.exec(itemContent);
+        const thumbMatch = /<media:thumbnail url="([^"]+)"/.exec(itemContent) || /src="([^"]+)"/.exec(itemContent);
 
-        if (id && rawTitle) {
-          scraped.push({
-            rawTitle,
-            embedUrl: `https://www.xvideos.com/embedframe/${id}`,
-            thumbnailUrl,
-            keywords: rawTitle
-          });
-          countOnPage++;
+        if (titleMatch && linkMatch) {
+          const rawTitle = titleMatch[1].replace('<![CDATA[', '').replace(']]>', '');
+          const link = linkMatch[1];
+          const idMatch = /\/video\.?([a-zA-Z0-9]+)\//.exec(link) || /\/video(\d+)\//.exec(link);
+          
+          if (idMatch) {
+            const videoId = idMatch[1];
+            scraped.push({
+              rawTitle,
+              embedUrl: `https://www.xvideos.com/embedframe/${videoId}`,
+              thumbnailUrl: thumbMatch ? thumbMatch[1] : '',
+              keywords: rawTitle
+            });
+          }
         }
-        if (scraped.length >= targetLimit) break;
       }
-
-      console.log(`Page ${page}: Scraped ${countOnPage} videos (Total: ${scraped.length})`);
-      if (countOnPage === 0) {
-        page++;
-        continue;
-      }
-      page++;
-      await new Promise(r => setTimeout(r, 1000)); // Rate limiting delay
     } catch (e) {
-      console.log(`Error on page ${page}: ${e.message}. Retrying next page...`);
-      page++;
+      console.log(`Error fetching RSS: ${e.message}`);
     }
   }
+
   return scraped;
 }
 
@@ -119,8 +118,8 @@ async function main() {
   const existingSlugs = new Set(existing.map(v => v.slug));
   const existingEmbeds = new Set(existing.map(v => v.embedUrl));
 
-  const rawVideos = await scrapeStepsisterVideos(500);
-  console.log(`Total raw fetched: ${rawVideos.length}`);
+  const rawVideos = await scrapeStepsisterVideos();
+  console.log(`Total raw fetched via RSS: ${rawVideos.length}`);
 
   const newEntries = [];
 
@@ -156,7 +155,7 @@ async function main() {
   }
 
   if (newEntries.length === 0) {
-    console.log("No new unique entries to add.");
+    console.log("No new unique entries found.");
     return;
   }
 
