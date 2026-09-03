@@ -56,45 +56,43 @@ function getRandomViews() {
 function getRandomRating() { return Math.floor(Math.random() * 9) + 87; }
 
 async function scrapeStepsisterVideos(targetLimit = 500) {
-  console.log(`🌐 Fetching ${targetLimit} Stepsister videos via proxy API...`);
+  console.log(`🌐 Fetching ${targetLimit} Stepsister videos via Official API...`);
   const scraped = [];
   let page = 1;
 
-  while (scraped.length < targetLimit && page <= 25) {
+  while (scraped.length < targetLimit && page <= 20) {
     try {
-      // Using EPORNER / XVideos free json middleware to bypass Cloudflare 429
-      const url = `https://eporner-api.vercel.app/api/search?q=stepsister&page=${page}&per_page=30`;
-      const res = await axios.get(url, { timeout: 15000 });
-      const videos = res.data?.videos || res.data || [];
+      // Official public JSON endpoint (No proxy, No key required)
+      const url = `https://www.eporner.com/api/v2/video/search/?query=stepsister&per_page=30&page=${page}&thumbsize=big&order=top-monthly&format=json`;
+      const res = await axios.get(url, {
+        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' },
+        timeout: 10000
+      });
 
-      if (!Array.isArray(videos) || videos.length === 0) {
-        console.log(`No more videos found at page ${page}`);
+      const videos = res.data?.videos || [];
+
+      if (videos.length === 0) {
+        console.log(`No videos returned on page ${page}`);
         break;
       }
 
-      let addedThisPage = 0;
       for (const v of videos) {
-        const id = v.id || v.embed?.split('/embed/')[1] || v.embedframe?.split('/embedframe/')[1];
-        const rawTitle = v.title || v.tf;
-        const thumbnailUrl = v.default_thumb?.src || v.thumbnail || v.thumb;
-
-        if (rawTitle) {
+        if (v.embed && v.title) {
           scraped.push({
-            rawTitle,
-            embedUrl: id ? `https://www.xvideos.com/embedframe/${id}` : (v.embed || v.embedUrl || ''),
-            thumbnailUrl: thumbnailUrl || '',
-            keywords: v.keywords || rawTitle
+            rawTitle: v.title,
+            embedUrl: v.embed,
+            thumbnailUrl: v.default_thumb?.src || v.thumbs?.[0]?.src || '',
+            keywords: v.keywords || v.title
           });
-          addedThisPage++;
         }
         if (scraped.length >= targetLimit) break;
       }
 
-      console.log(`Page ${page}: Fetched ${addedThisPage} videos (Total: ${scraped.length})`);
+      console.log(`Page ${page}: Fetched ${videos.length} items (Total accumulated: ${scraped.length})`);
       page++;
-      await new Promise(r => setTimeout(r, 500));
+      await new Promise(r => setTimeout(r, 200));
     } catch (e) {
-      console.log(`Page ${page} failed: ${e.message}. Trying next page...`);
+      console.log(`Error on page ${page}: ${e.message}`);
       page++;
     }
   }
@@ -113,7 +111,7 @@ async function main() {
   const existingEmbeds = new Set(existing.map(v => v.embedUrl));
 
   const rawVideos = await scrapeStepsisterVideos(500);
-  console.log(`Total raw fetched: ${rawVideos.length}`);
+  console.log(`Total raw videos collected: ${rawVideos.length}`);
 
   const newEntries = [];
 
@@ -149,7 +147,7 @@ async function main() {
   }
 
   if (newEntries.length === 0) {
-    console.log("No new unique entries found.");
+    console.log("No new unique entries to write.");
     return;
   }
 
@@ -158,4 +156,4 @@ async function main() {
   console.log(`✅ Successfully added ${newEntries.length} new videos to database.json.`);
 }
 
-main().catch(e => console.error("Fatal error:", e));
+main().catch(e => console.error("Fatal:", e));
