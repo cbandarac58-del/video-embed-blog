@@ -1,15 +1,17 @@
+import axios from 'axios';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { exec } from 'child_process';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-// ─── Generic noise to exclude from tags ──────────────────────────────────────
+// ─── Generic keywords to exclude from tags ────────────────────────────────────
 const EXCLUDE_TAGS = new Set([
   'xvideos','xvideos.com','x-videos','x-video','porn','video','videos',
   'hd','free','raw','mms','leak','leaked','bangbros','brazzers','pervcity',
   'houseofyre','xvid','xv','adult','xxx','sex','tube','watch','full',
-  'scene','movie','clip','download','online','streaming','mofozo','com'
+  'scene','movie','clip','download','online','streaming'
 ]);
 
 // ─── Stepsister SEO Title Templates ──────────────────────────────────────────
@@ -24,27 +26,13 @@ const STEPSISTER_TITLES = [
   (k) => `${k} Stepsister Agrees To A Deal She Can't Refuse`,
   (k) => `My Stepsister ${k} Walked In & Couldn't Keep Her Hands Off`,
   (k) => `${k} – Stepbro Finally Gets What Stepsis Has Been Teasing`,
-  (k) => `Stepsis ${k} Caught Watching – Now She Has To Pay Up`,
-  (k) => `${k} – Hot Stepsister Gives Stepbro The Best Surprise Ever`,
-  (k) => `Petite Stepsister ${k} Takes Stepbro's Big Cock Like A Pro`,
-  (k) => `${k} Stepsister Stuck & Stepbro Sees His Chance`,
-  (k) => `Busty Stepsister ${k} Can't Stop Thinking About Stepbrother`,
-  (k) => `${k} – Stepsister's Secret Crush Turns Into Wild Taboo Fuck`,
-  (k) => `Real Taboo – Stepsister ${k} Finally Says Yes To Stepbro`,
-  (k) => `${k} Stepsis Sneaks Into Stepbro's Room For Late Night Fun`,
-  (k) => `Teen Stepsister ${k} Gets Her Tight Pussy Pounded By Stepbro`,
-  (k) => `${k} – Naughty Stepsister Trades A Favor For Mind-Blowing Sex`,
 ];
 
 // ─── Stepsister SEO Description Templates ────────────────────────────────────
 const STEPSISTER_DESCS = [
-  (k, title) => `Watch this incredible taboo video featuring ${title}. This naughty stepsister couldn't resist her stepbrother any longer and finally gave in to her forbidden desires. Hot, raw, and completely uncensored stepsister action with ${k} that you won't find anywhere else. Perfect for fans of taboo family roleplay and genuine amateur passion.`,
-  (k, title) => `${title} – One of the hottest stepsister videos online right now. She walked in at the wrong time and things escalated fast. Watch as this sexy stepsis gets what she's been secretly craving from her stepbro. Real taboo energy, stunning body, and non-stop action from start to finish. Must-watch for stepsister fantasy lovers.`,
-  (k, title) => `You won't believe how wild things get in this ${title} video. This gorgeous stepsister had been flirting for weeks and today stepbro finally made his move. Watch the full taboo encounter – from the first awkward moment to the explosive finish. Featuring ${k}, this is the kind of stepsister content that keeps you coming back for more.`,
-  (k, title) => `This ${title} clip is pure taboo gold. Stepsis was trying to be sneaky but stepbro caught her red-handed and turned the situation into something neither of them will forget. Hot stepbrother and stepsister chemistry, passionate forbidden sex, and a finish that will blow your mind. Fan-favorite content for taboo fantasy enthusiasts.`,
-  (k, title) => `Featuring ${k} in ${title} – this stepsister fantasy video is breaking records online. Watch as their forbidden attraction finally boils over into the hottest taboo sex session you've seen all year. Passionate, raw, and completely addictive viewing – this is exactly why stepsister videos dominate search results everywhere.`,
-  (k, title) => `${title} delivers everything you want in a top-tier stepsister video. She's hot, he's ready, and the tension between them has been building for days. Once stepbro made his move, there was no stopping what came next. Real taboo roleplay energy with ${k} that feels completely authentic and wildly satisfying.`,
-  (k, title) => `Get ready for ${title} – the stepsister encounter you've been searching for. This gorgeous stepsis had always been off-limits but today the rules went right out the window. Watch their forbidden chemistry explode into the rawest, most satisfying taboo sex scene online. ${k} content at its absolute best.`,
+  (k, title) => `Watch this incredible taboo video featuring ${title}. This naughty stepsister couldn't resist her stepbrother any longer and finally gave in to her forbidden desires. Hot, raw, and completely uncensored stepsister action with ${k} that you won't find anywhere else.`,
+  (k, title) => `${title} – One of the hottest stepsister videos online right now. She walked in at the wrong time and things escalated fast. Watch as this sexy stepsis gets what she's been secretly craving from her stepbro. Real taboo energy and non-stop action.`,
+  (k, title) => `You won't believe how wild things get in this ${title} video. This gorgeous stepsister had been flirting for weeks and today stepbro finally made his move. Watch the full taboo encounter featuring ${k}.`,
 ];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -76,42 +64,67 @@ function buildSEOTags(keywords) {
       k.length > 2 &&
       !EXCLUDE_TAGS.has(k) &&
       !/\d{4}/.test(k) &&
-      !k.includes('xvideos') &&
-      !k.includes('www-')
+      !k.includes('xvideos')
     )
-    .slice(0, 5);
+    .slice(0, 4);
 
-  const merged = [...new Set([...baseTags, ...fromKeywords])].slice(0, 10);
-  return merged;
+  return [...new Set([...baseTags, ...fromKeywords])].slice(0, 8);
 }
 
 function getRandomViews() {
   const opts = ['280K','410K','560K','720K','890K','1.1M','1.5M','2.0M','2.6M','3.2M','4.1M'];
   return opts[Math.floor(Math.random() * opts.length)];
 }
+
 function getRandomRating() { return Math.floor(Math.random() * 9) + 87; }
 
-function getRandomDate() {
-  // Random date between 2025-01-01 and 2026-06-01
-  const start = new Date('2025-01-01').getTime();
-  const end = new Date('2026-06-01').getTime();
-  const d = new Date(start + Math.random() * (end - start));
-  return d.toISOString().split('T')[0];
+// ─── XVideos Scraper Function (500 Limit) ────────────────────────────────────
+async function scrapeStepsisterVideos(targetLimit = 500) {
+  console.log(`🌐 Fetching ${targetLimit} Stepsister videos from XVideos API...`);
+  const scraped = [];
+  let page = 0;
+
+  while (scraped.length < targetLimit && page < 30) {
+    try {
+      const url = `https://www.xvideos.com/api/videosearch/v3?k=stepsister&p=${page}&sort=relevance`;
+      const res = await axios.get(url, {
+        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }
+      });
+
+      const videos = res.data?.videos || [];
+      if (videos.length === 0) break;
+
+      for (const v of videos) {
+        if (!v.id) continue;
+        scraped.push({
+          rawTitle: v.tf || v.t || 'Hot Stepsister',
+          embedUrl: `https://www.xvideos.com/embedframe/${v.id}`,
+          thumbnailUrl: v.u || v.i || '',
+          keywords: v.k ? v.k.join(',') : ''
+        });
+        if (scraped.length >= targetLimit) break;
+      }
+      page++;
+    } catch (e) {
+      console.error(`❌ Page ${page} Fetch Error:`, e.message);
+      break;
+    }
+  }
+  return scraped;
 }
 
-// ─── Main ─────────────────────────────────────────────────────────────────────
+// ─── Main Execution ──────────────────────────────────────────────────────────
 async function main() {
-  const rawPath = path.resolve(__dirname, '../src/content/videos/raw_stepsister_500.json');
-  const dbPath  = path.resolve(__dirname, '../src/content/videos/database.json');
-
-  const rawVideos = JSON.parse(fs.readFileSync(rawPath, 'utf-8'));
-  const existing  = JSON.parse(fs.readFileSync(dbPath, 'utf-8'));
-
-  const existingSlugs  = new Set(existing.map(v => v.slug));
+  const dbPath = path.resolve(__dirname, '../src/content/videos/database.json');
+  const existing = JSON.parse(fs.readFileSync(dbPath, 'utf-8'));
+  const existingSlugs = new Set(existing.map(v => v.slug));
   const existingEmbeds = new Set(existing.map(v => v.embedUrl));
 
   console.log(`📦 Existing videos in DB: ${existing.length}`);
-  console.log(`📋 Raw stepsister videos to process: ${rawVideos.length}\n`);
+
+  // Fetch 500 Stepsister videos
+  const rawVideos = await scrapeStepsisterVideos(500);
+  console.log(`📋 Fetched ${rawVideos.length} stepsister videos to process.\n`);
 
   const newEntries = [];
   let skipped = 0;
@@ -119,20 +132,16 @@ async function main() {
   for (let i = 0; i < rawVideos.length; i++) {
     const raw = rawVideos[i];
 
-    // Skip duplicates
     if (existingEmbeds.has(raw.embedUrl)) {
-      process.stdout.write(`[${i+1}/${rawVideos.length}] ⏭️  Duplicate – ${raw.id}\n`);
       skipped++;
       continue;
     }
 
     const keyword = extractKeyword(raw.rawTitle || '');
 
-    // Pick random title template
     const titleTpl = STEPSISTER_TITLES[Math.floor(Math.random() * STEPSISTER_TITLES.length)];
     const title = titleTpl(keyword);
 
-    // Pick random description template
     const descTpl = STEPSISTER_DESCS[Math.floor(Math.random() * STEPSISTER_DESCS.length)];
     const description = descTpl(keyword, title);
 
@@ -141,39 +150,48 @@ async function main() {
     let slug = slugify(title).slice(0, 90);
     let attempt = 1;
     while (existingSlugs.has(slug)) slug = `${slugify(title).slice(0, 80)}-${attempt++}`;
+    
     existingSlugs.add(slug);
     existingEmbeds.add(raw.embedUrl);
 
-    const entry = {
+    newEntries.push({
       title,
       slug,
       description,
       embedUrl: raw.embedUrl,
-      thumbnailUrl: raw.thumbnailUrl || '',
+      thumbnailUrl: raw.thumbnailUrl,
       tags,
       category: 'stepsister',
       rating: getRandomRating(),
       views: getRandomViews(),
-      dateAdded: getRandomDate(),
-    };
-
-    newEntries.push(entry);
-    process.stdout.write(`[${i+1}/${rawVideos.length}] ✅ "${title.slice(0, 70)}"\n`);
+      dateAdded: new Date().toISOString().split('T')[0],
+    });
   }
 
   if (newEntries.length === 0) {
-    console.log('\n⚠️  No new videos to add. All were duplicates.');
+    console.log('\n⚠️ No new videos added. All were duplicates.');
     return;
   }
 
-  // Prepend new entries (newest first)
+  // Prepend new videos
   const updated = [...newEntries, ...existing];
   fs.writeFileSync(dbPath, JSON.stringify(updated, null, 2), 'utf-8');
 
   console.log(`\n✅ Done! Added ${newEntries.length} new stepsister videos.`);
-  console.log(`⏭️  Skipped ${skipped} duplicates.`);
-  console.log(`📦 Total videos in DB: ${updated.length}`);
+  console.log(`⏭️ Skipped ${skipped} duplicates.`);
+  console.log(`📦 Total DB Videos: ${updated.length}`);
+
+  // Trigger IndexNow Script if exists
+  console.log('\n🚀 Triggering IndexNow to notify search engines...');
+  exec('node scripts/indexnow.js', (err, stdout) => {
+    if (!err && stdout) console.log(stdout.trim());
+  });
+
+  // Fix thumbnails
+  console.log('🖼️ Running thumbnail fix...');
+  exec('node scripts/fix_thumbnails.js', (err, stdout) => {
+    if (!err && stdout) console.log(stdout.trim());
+  });
 }
 
-main().catch(e => console.error('❌ Error:', e.message));
-
+main().catch(e => console.error('Error:', e.message));
