@@ -62,7 +62,6 @@ async function scrapeStepsisterVideos(targetLimit = 500) {
 
   while (scraped.length < targetLimit && page <= 20) {
     try {
-      // Official public JSON endpoint (No proxy, No key required)
       const url = `https://www.eporner.com/api/v2/video/search/?query=stepsister&per_page=30&page=${page}&thumbsize=big&order=top-monthly&format=json`;
       const res = await axios.get(url, {
         headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' },
@@ -139,7 +138,7 @@ async function main() {
       embedUrl: raw.embedUrl,
       thumbnailUrl: raw.thumbnailUrl,
       tags,
-      category: 'stepsister',
+      category: 'Stepsister',
       rating: getRandomRating(),
       views: getRandomViews(),
       dateAdded: new Date().toISOString().split('T')[0],
