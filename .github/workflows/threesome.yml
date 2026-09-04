@@ -14,7 +14,7 @@ jobs:
         with:
           node-version: '20'
       - run: npm install axios
-      - run: node scripts/scrape.js # ඔයාගේ script file එක තියෙන path එක මෙතනට දෙන්න
+      - run: node scripts/import_threesome_2000.js
       - run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
