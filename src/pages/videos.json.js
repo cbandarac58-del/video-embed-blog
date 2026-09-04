@@ -1,7 +1,6 @@
-import type { APIRoute } from 'astro';
 import { getCollection } from 'astro:content';
 
-export const GET: APIRoute = async () => {
+export const GET = async () => {
   try {
     const videos = await getCollection('videos');
 
