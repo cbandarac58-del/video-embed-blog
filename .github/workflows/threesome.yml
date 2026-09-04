@@ -10,11 +10,20 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
+
       - run: npm install axios
+
+      # Scraper Script එක Run කිරීම
       - run: node scripts/import_threesome_2000.js
+
+      # database.json එකේ මොනවා හරි Syntax Error එකක් තිබුනොත් Auto-Fix කර Clean JSON එකක් සෑදීම
+      - run: node -e "const fs=require('fs'); const path='./src/content/videos/database.json'; if(fs.existsSync(path)){ const data=JSON.parse(fs.readFileSync(path)); fs.writeFileSync(path, JSON.stringify(data, null, 2)); }"
+
+      # GitHub එකට Auto-Commit කර Push කිරීම
       - run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
