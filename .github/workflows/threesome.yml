@@ -1,0 +1,23 @@
+name: Manual Scrape Trigger
+
+on:
+  workflow_dispatch:
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm install axios
+      - run: node scripts/scrape.js # ඔයාගේ script file එක තියෙන path එක මෙතනට දෙන්න
+      - run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add .
+          git diff-index --quiet HEAD || git commit -m "Auto added 1000 threesome videos"
+          git push
