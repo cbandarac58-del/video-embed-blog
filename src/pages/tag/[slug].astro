@@ -6,6 +6,7 @@ import VideoCard from '../../components/VideoCard.astro';
 
 export async function getStaticPaths() {
   const allVideos = await getCollection('videos');
+
   const slugify = (text: string) => 
     text.toString().toLowerCase()
       .replace(/\s+/g, '-')
@@ -27,22 +28,28 @@ export async function getStaticPaths() {
       const tagClean = tag.trim();
       if (tagClean) {
         const slug = slugify(tagClean);
-        if (!tagMap[slug]) {
-          tagMap[slug] = { tagName: tagClean, videos: [] };
+        // හිස් (empty) Slug නිර්මාණය වීම වැළැක්වීම (Build Fail වීම සදහටම නවතී)
+        if (slug && slug.trim() !== '') {
+          if (!tagMap[slug]) {
+            tagMap[slug] = { tagName: tagClean, videos: [] };
+          }
+          tagMap[slug].videos.push(v);
         }
-        tagMap[slug].videos.push(v);
       }
     });
   });
 
-  return Object.entries(tagMap).map(([tagSlug, data]) => ({
-    params: { slug: tagSlug },
-    props: {
-      tagName: data.tagName,
-      allCategories,
-      videos: data.videos.sort((a, b) => new Date(b.data.dateAdded).getTime() - new Date(a.data.dateAdded).getTime())
-    }
-  }));
+  // Entry list එකෙන් Valid non-empty slug තියෙන ඒවා විතරක් map කිරීම
+  return Object.entries(tagMap)
+    .filter(([tagSlug]) => tagSlug && tagSlug.trim() !== '')
+    .map(([tagSlug, data]) => ({
+      params: { slug: tagSlug },
+      props: {
+        tagName: data.tagName,
+        allCategories,
+        videos: data.videos.sort((a, b) => new Date(b.data.dateAdded).getTime() - new Date(a.data.dateAdded).getTime())
+      }
+    }));
 }
 
 const { slug } = Astro.params;
@@ -93,8 +100,6 @@ function getCardGradient(videoSlug: string) {
       <p class="mx-auto mt-4 max-w-2xl text-sm sm:text-base text-slate-400">
         Streaming the highest-rated free porn videos tagged with #{tagName}. Fully optimized for all mobile platforms.
       </p>
-      
-
     </div>
   </section>
 
