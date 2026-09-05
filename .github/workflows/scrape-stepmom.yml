@@ -1,0 +1,31 @@
+name: Auto Scrape Step Mom Videos
+
+on:
+  workflow_dispatch:
+
+jobs:
+  scrape-and-commit:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Dependencies
+        run: npm install axios
+
+      - name: Run Stepmom Scraper
+        run: node scripts/scrape-stepmom.js
+
+      - name: Commit & Push Changes
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/content/videos/database.json
+          git status
+          git diff-index --quiet HEAD || (git commit -m "Automated: Added Step Mom videos to database.json" && git push)
