@@ -58,37 +58,43 @@ function getRandomRating() { return Math.floor(Math.random() * 9) + 88; }
 async function scrapeStepmomVideos(targetLimit = 1000) {
   console.log(`🌐 Fetching ${targetLimit} Step Mom videos via Official API...`);
   const scraped = [];
-  let page = 1;
+  const orders = ['latest', 'top-weekly', 'most-popular'];
 
-  while (scraped.length < targetLimit && page <= 40) {
-    try {
-      const url = `https://www.eporner.com/api/v2/video/search/?query=stepmom&per_page=30&page=${page}&thumbsize=big&order=top-monthly&format=json`;
-      const res = await axios.get(url, {
-        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' },
-        timeout: 10000
-      });
+  for (const order of orders) {
+    if (scraped.length >= targetLimit) break;
+    let page = 1;
+    console.log(`🔄 Switching search strategy to order: ${order}`);
 
-      const videos = res.data?.videos || [];
-      if (videos.length === 0) break;
+    while (scraped.length < targetLimit && page <= 30) {
+      try {
+        const url = `https://www.eporner.com/api/v2/video/search/?query=stepmom&per_page=30&page=${page}&thumbsize=big&order=${order}&format=json`;
+        const res = await axios.get(url, {
+          headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' },
+          timeout: 10000
+        });
 
-      for (const v of videos) {
-        if (v.embed && v.title) {
-          scraped.push({
-            rawTitle: v.title,
-            embedUrl: v.embed,
-            thumbnailUrl: v.default_thumb?.src || v.thumbs?.[0]?.src || '',
-            keywords: v.keywords || v.title
-          });
+        const videos = res.data?.videos || [];
+        if (videos.length === 0) break;
+
+        for (const v of videos) {
+          if (v.embed && v.title) {
+            scraped.push({
+              rawTitle: v.title,
+              embedUrl: v.embed,
+              thumbnailUrl: v.default_thumb?.src || v.thumbs?.[0]?.src || '',
+              keywords: v.keywords || v.title
+            });
+          }
+          if (scraped.length >= targetLimit) break;
         }
-        if (scraped.length >= targetLimit) break;
-      }
 
-      console.log(`Page ${page}: Fetched ${videos.length} items (Total accumulated: ${scraped.length})`);
-      page++;
-      await new Promise(r => setTimeout(r, 150));
-    } catch (e) {
-      console.log(`Error on page ${page}: ${e.message}`);
-      page++;
+        console.log(`[${order}] Page ${page}: Fetched ${videos.length} items (Total accumulated: ${scraped.length})`);
+        page++;
+        await new Promise(r => setTimeout(r, 150));
+      } catch (e) {
+        console.log(`Error on page ${page}: ${e.message}`);
+        page++;
+      }
     }
   }
   return scraped;
@@ -121,6 +127,12 @@ async function main() {
     const tags = buildSEOTags(raw.keywords || '');
 
     let slug = slugify(title).slice(0, 90);
+    
+    // Slug Guard Condition (Build failures නවත්වන්න)
+    if (!slug || slug.trim() === '') {
+      slug = `stepmom-video-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    }
+
     let attempt = 1;
     while (existingSlugs.has(slug)) slug = `${slugify(title).slice(0, 80)}-${attempt++}`;
 
