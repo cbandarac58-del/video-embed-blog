@@ -7,12 +7,14 @@ import VideoCard from '../../components/VideoCard.astro';
 export async function getStaticPaths() {
   const allVideos = await getCollection('videos');
 
-  // Filter valid video objects with proper slugs
-  const videos = allVideos.filter(v => 
-    v?.data?.slug && 
-    typeof v.data.slug === 'string' && 
-    v.data.slug.trim() !== ''
-  );
+  // Filter valid video objects with proper slugs & limit to 300 to prevent Cloudflare memory crash
+  const videos = allVideos
+    .filter(v => 
+      v?.data?.slug && 
+      typeof v.data.slug === 'string' && 
+      v.data.slug.trim() !== ''
+    )
+    .slice(0, 300);
 
   return videos.map((video) => {
     const { title, category = 'Other', slug } = video.data;
