@@ -4,7 +4,12 @@ import cloudflare from '@astrojs/cloudflare';
 // https://astro.build/config
 export default defineConfig({
   output: 'server',
-  adapter: cloudflare(),
+  adapter: cloudflare({
+    imageService: 'cloudflare',
+    platformProxy: {
+      enabled: true
+    }
+  }),
   site: 'https://vixtube.net',
   prefetch: {
     prefetchAll: false
