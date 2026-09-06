@@ -7,21 +7,31 @@ import VideoCard from '../../components/VideoCard.astro';
 export async function getStaticPaths() {
   const allVideos = await getCollection('videos');
 
-  // Filter valid video objects with proper slugs & limit to 300 to prevent Cloudflare memory crash
-  const videos = allVideos
-    .filter(v => 
-      v?.data?.slug && 
-      typeof v.data.slug === 'string' && 
-      v.data.slug.trim() !== ''
-    )
-    .slice(0, 300);
+  // Filter valid video objects with proper slugs
+  // NOTE: removed the old `.slice(0, 300)` — that was hiding thousands of videos.
+  const videos = allVideos.filter(v =>
+    v?.data?.slug &&
+    typeof v.data.slug === 'string' &&
+    v.data.slug.trim() !== ''
+  );
+
+  // Group videos by category ONCE (O(n)) instead of re-filtering the
+  // entire 13,000+ video list for every single page (O(n^2)).
+  // This is what was actually crashing the Cloudflare build at scale.
+  const byCategory = new Map();
+  for (const v of videos) {
+    const cat = v.data.category || 'Other';
+    if (!byCategory.has(cat)) byCategory.set(cat, []);
+    byCategory.get(cat).push(v);
+  }
 
   return videos.map((video) => {
     const { title, category = 'Other', slug } = video.data;
 
-    // Build time සහ RAM limit එක රකින සරල Related Videos filter එකක්
-    const relatedVideos = videos
-      .filter(v => v.data.category === category && v.data.slug !== slug)
+    // O(1) lookup instead of scanning all videos again
+    const categoryVideos = byCategory.get(category) || [];
+    const relatedVideos = categoryVideos
+      .filter(v => v.data.slug !== slug)
       .slice(0, 4);
 
     return {
@@ -389,7 +399,7 @@ function safeISODate(dateStr: string) {
             }
           } catch (err) {
             console.error('Error rendering player:', err);
-            container.innerHTML = '<div class="text-rose-500 text-sm p-4 text-center">Failed to load video player. Click the link below to watch directly.</div>';
+            container.innerHTML = '<div class="text-rose-500 text-sm p-4 text-center">Failed to load player. Click the link below to watch directly.</div>';
           }
         });
       </script>
