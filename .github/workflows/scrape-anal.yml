@@ -16,7 +16,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20'
 
       - name: Install Dependencies
         run: npm install axios
@@ -100,9 +100,8 @@ jobs:
                   }
                   if (scraped.length >= targetLimit) break;
                 }
-                console.log(`Page ${page}: Fetched ${videos.length} items (Total: ${scraped.length})`);
                 page++;
-                await new Promise(r => setTimeout(r, 200));
+                await new Promise(r => setTimeout(r, 150));
               } catch (e) {
                 console.log(`Error on page ${page}: ${e.message}`);
                 page++;
@@ -161,9 +160,10 @@ jobs:
               return;
             }
 
-            const updated = [...newEntries, ...existing];
+            // Keep max 3500 entries to prevent Cloudflare build memory limits
+            const updated = [...newEntries, ...existing].slice(0, 3500);
             fs.writeFileSync(dbPath, JSON.stringify(updated, null, 2), "utf-8");
-            console.log(`✅ Successfully added ${newEntries.length} new Anal videos to database.json.`);
+            console.log(`✅ Successfully added ${newEntries.length} new Anal videos (Database total: ${updated.length}).`);
           }
 
           main().catch(e => console.error("Fatal:", e));
