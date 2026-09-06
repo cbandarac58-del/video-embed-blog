@@ -21,9 +21,9 @@ jobs:
       - name: Install Dependencies
         run: npm install axios
 
-      - name: Run Inline Anal Scraper
+      - name: Create Temporary Scraper Script
         run: |
-          node -e '
+          cat << 'EOF' > run_anal.js
           const axios = require("axios");
           const fs = require("fs");
           const path = require("path");
@@ -167,7 +167,13 @@ jobs:
           }
 
           main().catch(e => console.error("Fatal:", e));
-          '
+          EOF
+
+      - name: Run Scraper Script
+        run: node run_anal.js
+
+      - name: Clean up temporary script
+        run: rm -f run_anal.js
 
       - name: Commit and Push Changes
         run: |
