@@ -23,7 +23,7 @@ jobs:
 
       - name: Create Temporary Scraper Script
         run: |
-          cat << 'EOF' > run_anal.js
+          cat << 'EOF' > run_anal.cjs
           const axios = require("axios");
           const fs = require("fs");
           const path = require("path");
@@ -170,10 +170,10 @@ jobs:
           EOF
 
       - name: Run Scraper Script
-        run: node run_anal.js
+        run: node run_anal.cjs
 
       - name: Clean up temporary script
-        run: rm -f run_anal.js
+        run: rm -f run_anal.cjs
 
       - name: Commit and Push Changes
         run: |
