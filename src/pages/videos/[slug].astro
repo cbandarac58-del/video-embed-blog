@@ -1,6 +1,4 @@
 ---
-export const prerender = true;
-
 import { getCollection } from 'astro:content';
 import Layout from '../../layouts/Layout.astro';
 import AdContainer from '../../components/AdContainer.astro';
@@ -9,83 +7,52 @@ import VideoCard from '../../components/VideoCard.astro';
 export async function getStaticPaths() {
   const allVideos = await getCollection('videos');
 
-  // 1. Valid slug තියෙන වීඩියෝ විතරක් filter කරගැනීම (Build Fail වීම වළක්වයි)
+  // Filter valid video objects with proper slugs
   const videos = allVideos.filter(v => 
-    v.data && 
-    v.data.slug && 
+    v?.data?.slug && 
     typeof v.data.slug === 'string' && 
     v.data.slug.trim() !== ''
   );
 
-  // Group videos by category for fast similarity lookup
-  const videosByCategory: Record<string, typeof videos> = {};
-  videos.forEach(v => {
+  // Quick lookup dictionary for same-category videos
+  const categoryMap = new Map<string, typeof videos>();
+  for (const v of videos) {
     const cat = v.data.category || 'Other';
-    if (!videosByCategory[cat]) {
-      videosByCategory[cat] = [];
+    if (!categoryMap.has(cat)) {
+      categoryMap.set(cat, []);
     }
-    videosByCategory[cat].push(v);
-  });
-
-  // Group videos by title to resolve duplicate SEO issues
-  const videosByTitle: Record<string, typeof videos> = {};
-  videos.forEach(v => {
-    const title = v.data.title;
-    if (!videosByTitle[title]) {
-      videosByTitle[title] = [];
-    }
-    videosByTitle[title].push(v);
-  });
+    categoryMap.get(cat)!.push(v);
+  }
 
   return videos.map((video) => {
-    const { title, category, tags, slug } = video.data;
+    const { title, category, tags = [], slug } = video.data;
 
-    // Detect duplicates stably
-    const duplicateVideos = videosByTitle[title] || [];
-    let uniqueTitle = title;
-    let uniqueDescription = `Watch ${title} embedded video online for free. Category: ${category}. Views: ${video.data.views}.`;
+    const catName = category || 'Other';
+    const sameCatVideos = categoryMap.get(catName) || [];
 
-    if (duplicateVideos.length > 1) {
-      const sortedDuplicates = [...duplicateVideos].sort((a, b) => a.data.slug.localeCompare(b.data.slug));
-      const duplicateIndex = sortedDuplicates.findIndex(v => v.data.slug === slug);
-      if (duplicateIndex !== -1) {
-        uniqueTitle = `${title} - Clip ${duplicateIndex + 1}`;
-        uniqueDescription = `Watch ${title} - Clip ${duplicateIndex + 1} embedded video online for free. Category: ${category}. Views: ${video.data.views}.`;
-      }
-    }
-
-    // Similarity score calculation against category candidates
-    const sameCatVideos = videosByCategory[category] || [];
+    // Fast tag intersection calculation
+    const currentTags = new Set(tags);
     
-    function getSimilarityScore(videoB: any) {
-      const tagsA = new Set(tags || []);
-      const tagsB = videoB.data.tags || [];
-      let intersectionSize = 0;
-      for (const tag of tagsB) {
-        if (tagsA.has(tag)) intersectionSize++;
-      }
-      let score = intersectionSize * 10;
-      if (category === videoB.data.category) score += 5;
-      return score;
-    }
-
-    // Restrict similarity check to first 100 same-category videos for extremely fast O(N) build speed
-    const candidateVideos = sameCatVideos
+    const relatedVideos = sameCatVideos
       .filter(v => v.data.slug !== slug)
-      .slice(0, 100);
-
-    const relatedVideos = candidateVideos
-      .map((v) => ({ video: v, score: getSimilarityScore(v) }))
+      .map(v => {
+        let score = 5;
+        const otherTags = v.data.tags || [];
+        for (let i = 0; i < otherTags.length; i++) {
+          if (currentTags.has(otherTags[i])) score += 10;
+        }
+        return { video: v, score };
+      })
       .sort((a, b) => b.score - a.score)
       .slice(0, 4)
-      .map((item) => item.video);
+      .map(item => item.video);
 
     return {
-      params: { slug: video.data.slug }, // video.id වෙනුවට video.data.slug යොදා ඇත
+      params: { slug },
       props: {
         video,
-        uniqueTitle,
-        uniqueDescription,
+        uniqueTitle: title,
+        uniqueDescription: `Watch ${title} embedded video online for free. Category: ${catName}.`,
         relatedVideos
       }
     };
@@ -93,42 +60,27 @@ export async function getStaticPaths() {
 }
 
 const { video, uniqueTitle, uniqueDescription, relatedVideos } = Astro.props;
-const { slug } = Astro.params;
+const { title, embedUrl, rating, views, category, tags = [], dateAdded, thumbnailUrl } = video.data;
 
-const { title, embedUrl, rating, views, category, tags, dateAdded, thumbnailUrl } = video.data;
-const catSlug = category.toLowerCase().replace(/\s+/g, '-').replace(/[^\w\-]+/g, '').replace(/\-\-+/g, '-').replace(/^-+/, '').replace(/-+$/, '');
+const catSlug = (category || 'other')
+  .toLowerCase()
+  .replace(/\s+/g, '-')
+  .replace(/[^\w\-]+/g, '')
+  .replace(/\-\-+/g, '-')
+  .replace(/^-+/, '')
+  .replace(/-+$/, '');
 
-// Format views count
 function formatViews(val: string | number) {
   if (typeof val === 'string') return val;
-  if (val >= 1000000) {
-    return (val / 1000000).toFixed(1) + 'M';
-  }
-  if (val >= 1000) {
-    return (val / 1000).toFixed(0) + 'K';
-  }
-  return val.toString();
-}
-
-// Procedural card gradients
-function getCardGradient(slug: string) {
-  const hash = slug.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-  const gradients = [
-    'from-rose-600/20 to-purple-600/10 hover:from-rose-500/30 hover:to-purple-500/20',
-    'from-purple-600/20 to-indigo-600/10 hover:from-purple-500/30 hover:to-indigo-500/20',
-    'from-pink-600/20 to-rose-600/10 hover:from-pink-500/30 hover:to-rose-500/20',
-    'from-indigo-600/20 to-violet-600/10 hover:from-indigo-500/30 hover:to-violet-500/20',
-    'from-amber-600/20 to-rose-600/10 hover:from-amber-500/30 hover:to-rose-500/20',
-  ];
-  return gradients[hash % gradients.length];
+  if (val >= 1000000) return (val / 1000000).toFixed(1) + 'M';
+  if (val >= 1000) return (val / 1000).toFixed(0) + 'K';
+  return val ? val.toString() : '0';
 }
 
 function safeISODate(dateStr: string) {
   try {
     const d = new Date(dateStr);
-    if (!isNaN(d.getTime())) {
-      return d.toISOString();
-    }
+    if (!isNaN(d.getTime())) return d.toISOString();
   } catch (e) {}
   return new Date().toISOString();
 }
@@ -140,7 +92,7 @@ function safeISODate(dateStr: string) {
     "@context": "https://schema.org",
     "@type": "VideoObject",
     "name": uniqueTitle,
-    "description": `Watch ${uniqueTitle} adult video online for free. Category: ${category}.`,
+    "description": `Watch ${uniqueTitle} video online for free. Category: ${category}.`,
     "thumbnailUrl": thumbnailUrl || "https://vixtube.net/og-image.jpg",
     "uploadDate": safeISODate(dateAdded),
     "embedUrl": embedUrl,
@@ -165,10 +117,10 @@ function safeISODate(dateStr: string) {
     <!-- Two-Column Layout: Player vs Sidebar -->
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 mt-6">
       
-      <!-- Video Player & Metadata (Lefthand/Core column) -->
+      <!-- Video Player & Metadata -->
       <div class="lg:col-span-8 flex flex-col">
         
-        <!-- Responsive Player Container (16:9 aspect ratio) -->
+        <!-- Responsive Player Container -->
         <div id="vast-preroll-wrapper" class="relative w-full aspect-video rounded-2xl overflow-hidden border border-slate-900 bg-black shadow-2xl shadow-rose-950/5 mb-1">
           <div id="main-player" class="absolute top-0 left-0 w-full h-full">
             {embedUrl.includes('xxxbp.tv') ? (
@@ -253,7 +205,7 @@ function safeISODate(dateStr: string) {
               </span>
             </div>
 
-            <!-- Action buttons -->
+            <!-- Share Button -->
             <div class="flex items-center space-x-2">
               <button id="share-btn" aria-label="Share video link" class="flex items-center space-x-1.5 rounded-lg bg-slate-900 border border-slate-800 hover:border-rose-500 hover:text-white px-3 py-1.5 transition-colors">
                 <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -272,7 +224,7 @@ function safeISODate(dateStr: string) {
             <span class="text-xs rounded-lg bg-rose-950/60 border border-rose-800 text-rose-300 px-3 py-1 font-semibold uppercase">
               {category}
             </span>
-            {tags.map((tag) => {
+            {tags.map((tag: string) => {
               const tagSlug = tag.toLowerCase().replace(/\s+/g, '-').replace(/[^\w\-]+/g, '').replace(/\-\-+/g, '-').replace(/^-+/, '').replace(/-+$/, '');
               return (
                 <a 
@@ -293,21 +245,19 @@ function safeISODate(dateStr: string) {
             <p class="text-xs text-slate-500">No other videos in this category yet.</p>
           ) : (
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              {relatedVideos.map((video) => (
-                <VideoCard video={video} />
+              {relatedVideos.map((v) => (
+                <VideoCard video={v} />
               ))}
             </div>
           )}
         </div>
       </div>
 
-      <!-- Sidebar Ads / Info (Righthand Column) -->
+      <!-- Sidebar Ads / Info -->
       <div class="lg:col-span-4 flex flex-col items-center space-y-6">
         
-        <!-- Ad Banner (300x250 sidebar) -->
         <AdContainer slotType="banner_300x250" />
 
-        <!-- 160x600 Wide Skyscraper Banner -->
         <div class="hidden lg:flex flex-col items-center justify-center my-2">
           <span class="text-[9px] uppercase tracking-widest text-slate-600 mb-1">Sponsored</span>
           <div class="flex items-center justify-center min-w-[160px] min-h-[600px] bg-slate-950/60 rounded border border-slate-900">
@@ -321,7 +271,6 @@ function safeISODate(dateStr: string) {
           </div>
         </div>
 
-        <!-- 160x300 Skyscraper Banner -->
         <div class="flex flex-col items-center justify-center my-2">
           <span class="text-[9px] uppercase tracking-widest text-slate-600 mb-1">Sponsored</span>
           <div class="flex items-center justify-center min-w-[160px] min-h-[300px] bg-slate-950/60 rounded border border-slate-900">
@@ -335,7 +284,6 @@ function safeISODate(dateStr: string) {
           </div>
         </div>
 
-        <!-- Compliance & Safe Content Info Box -->
         <div class="w-full rounded-xl border border-slate-900 bg-slate-950/80 p-5 text-slate-400 text-xs leading-relaxed space-y-3">
           <h3 class="font-bold text-slate-200 text-sm flex items-center space-x-1.5 border-b border-slate-900 pb-2">
             <span class="text-rose-500 font-extrabold">🔞</span>
@@ -344,7 +292,6 @@ function safeISODate(dateStr: string) {
           <p>VixTube is a video embed directory indexing publicly hosted video links. We have zero tolerance for illegal content.</p>
         </div>
 
-        <!-- 468x60 Banner -->
         <AdContainer slotType="banner_468x60" />
       </div>
     </div>
@@ -374,7 +321,6 @@ function safeISODate(dateStr: string) {
 
             try {
               await navigator.clipboard.writeText(window.location.href);
-              
               if (shareBtnText) {
                 const originalText = shareBtnText.textContent;
                 shareBtnText.textContent = 'Copied!';
