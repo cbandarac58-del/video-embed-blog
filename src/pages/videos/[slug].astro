@@ -14,45 +14,20 @@ export async function getStaticPaths() {
     v.data.slug.trim() !== ''
   );
 
-  // Quick lookup dictionary for same-category videos
-  const categoryMap = new Map<string, typeof videos>();
-  for (const v of videos) {
-    const cat = v.data.category || 'Other';
-    if (!categoryMap.has(cat)) {
-      categoryMap.set(cat, []);
-    }
-    categoryMap.get(cat)!.push(v);
-  }
-
   return videos.map((video) => {
-    const { title, category, tags = [], slug } = video.data;
+    const { title, category = 'Other', slug } = video.data;
 
-    const catName = category || 'Other';
-    const sameCatVideos = categoryMap.get(catName) || [];
-
-    // Fast tag intersection calculation
-    const currentTags = new Set(tags);
-    
-    const relatedVideos = sameCatVideos
-      .filter(v => v.data.slug !== slug)
-      .map(v => {
-        let score = 5;
-        const otherTags = v.data.tags || [];
-        for (let i = 0; i < otherTags.length; i++) {
-          if (currentTags.has(otherTags[i])) score += 10;
-        }
-        return { video: v, score };
-      })
-      .sort((a, b) => b.score - a.score)
-      .slice(0, 4)
-      .map(item => item.video);
+    // Build time සහ RAM limit එක රකින සරල Related Videos filter එකක්
+    const relatedVideos = videos
+      .filter(v => v.data.category === category && v.data.slug !== slug)
+      .slice(0, 4);
 
     return {
       params: { slug },
       props: {
         video,
         uniqueTitle: title,
-        uniqueDescription: `Watch ${title} embedded video online for free. Category: ${catName}.`,
+        uniqueDescription: `Watch ${title} embedded video online for free. Category: ${category}.`,
         relatedVideos
       }
     };
