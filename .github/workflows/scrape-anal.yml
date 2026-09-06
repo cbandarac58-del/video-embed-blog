@@ -3,28 +3,33 @@ name: Scrape Anal Videos
 on:
   workflow_dispatch: # GitHub UI එකෙන් manually run කරන්න
 
+# Repo එකට Commit & Push කිරීමට අවශ්‍ය Permissions ලබා දීම
+permissions:
+  contents: write
+
 jobs:
   scrape:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: '18'
 
       - name: Install Dependencies
         run: npm install axios
 
+      # ES Module (import statement) අවුල නැති කිරීමට --input-type=module ලෙස run කිරීම
       - name: Run Anal Scraper Script
-        run: node scrape-anal.js
+        run: node --input-type=module scrape-anal.js
 
       - name: Commit and Push Changes
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add src/content/videos/database.json
-          git commit -m "Auto-added 1000 Anal videos via GitHub Action" || exit 0
+          git commit -m "Auto-added 1000 Anal videos via GitHub Action" || echo "No changes to commit"
           git push
