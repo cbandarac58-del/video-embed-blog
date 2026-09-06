@@ -4,14 +4,8 @@ import Layout from '../layouts/Layout.astro';
 import AdContainer from '../components/AdContainer.astro';
 import VideoCard from '../components/VideoCard.astro';
 
-// Get query parameters for filtering and sorting
-const url = new URL(Astro.request.url);
-const activeCategory = url.searchParams.get('category') || '';
-const activeTag = url.searchParams.get('tag') || '';
-const searchQuery = url.searchParams.get('search') || '';
-const sortBy = url.searchParams.get('sort') || 'dateAdded';
-
 const VIDEOS_PER_PAGE = 40;
+const HOME_CARD_COUNT = 40;
 
 // Fetch videos collection
 let videos = [];
@@ -41,62 +35,39 @@ const categories = Array.from(categoryMap.values()).sort((a, b) => {
 
 const allTags = [...new Set(videos.flatMap(v => v.data?.tags || []))].filter(Boolean).slice(0, 15);
 
-// Apply filters
-let filteredVideos = [...videos];
+// Homepage always shows the default "All Trending" view (no category/tag/search here —
+// filtering by category/tag lives on /category/[slug] and /tag/[slug] pages).
+let filteredVideos = videos.filter(v => v.data?.category?.toLowerCase() !== 'yt romance');
 
-if (activeCategory) {
-  filteredVideos = filteredVideos.filter(v => v.data?.category?.toLowerCase() === activeCategory.toLowerCase());
-} else {
-  filteredVideos = filteredVideos.filter(v => v.data?.category?.toLowerCase() !== 'yt romance');
-}
+// Default sort: most recent first
+filteredVideos.sort((a, b) => new Date(b.data?.dateAdded || 0).getTime() - new Date(a.data?.dateAdded || 0).getTime());
 
-if (activeTag) {
-  filteredVideos = filteredVideos.filter(v => v.data?.tags?.some(t => t.toLowerCase() === activeTag.toLowerCase()));
-}
-
-if (searchQuery) {
-  const query = searchQuery.toLowerCase();
-  filteredVideos = filteredVideos.filter(v => 
-    (v.data?.title && v.data.title.toLowerCase().includes(query)) || 
-    (v.data?.category && v.data.category.toLowerCase().includes(query)) ||
-    (v.data?.tags && v.data.tags.some(t => t.toLowerCase().includes(query)))
-  );
-}
-
-// Parse views into numeric values
-function parseViews(v: string | number): number {
-  if (typeof v === 'number') return v;
-  if (!v) return 0;
-  const clean = v.toString().trim().toLowerCase();
-  const num = parseFloat(clean);
-  if (clean.includes('m')) return num * 1000000;
-  if (clean.includes('k')) return num * 1000;
-  return num || 0;
-}
-
-// Apply sorting
-filteredVideos.sort((a, b) => {
-  if (sortBy === 'views') {
-    return parseViews(b.data?.views) - parseViews(a.data?.views);
-  } else if (sortBy === 'rating') {
-    return (b.data?.rating || 0) - (a.data?.rating || 0);
-  } else {
-    return new Date(b.data?.dateAdded || 0).getTime() - new Date(a.data?.dateAdded || 0).getTime();
-  }
-});
-
-// Pagination — Rotator එක සඳහා Homepage එකේදී Cards 120 ක් Render කරයි
-const isDefaultHome = !activeCategory && !activeTag && !searchQuery;
 const totalVideos = filteredVideos.length;
 const totalPages = Math.ceil(totalVideos / VIDEOS_PER_PAGE);
-const pagedVideos = filteredVideos.slice(0, isDefaultHome ? 120 : VIDEOS_PER_PAGE);
 
+// Homepage now shows a real, stable first page (40 videos) —
+// no more localStorage-based rotation. Googlebot and every visitor
+// see the same content, and all 13,000+ videos stay discoverable
+// through consistent pagination (/page/2, /page/3, ...).
+const pagedVideos = filteredVideos.slice(0, HOME_CARD_COUNT);
+
+// FIXED: now parses numeric-looking strings (e.g. "15000") into "15K"
+// instead of just returning the raw string as-is.
 function formatViews(val: string | number) {
   if (!val) return '0';
-  if (typeof val === 'string') return val;
-  if (val >= 1000000) return (val / 1000000).toFixed(1) + 'M';
-  if (val >= 1000) return (val / 1000).toFixed(0) + 'K';
-  return val.toString();
+  let num: number;
+  if (typeof val === 'string') {
+    const cleaned = val.trim().toLowerCase();
+    if (cleaned.endsWith('m')) return val; // already formatted like "1.5M"
+    if (cleaned.endsWith('k')) return val; // already formatted like "15K"
+    num = parseFloat(cleaned);
+    if (isNaN(num)) return val; // not a number at all, just show as-is
+  } else {
+    num = val;
+  }
+  if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+  if (num >= 1000) return (num / 1000).toFixed(0) + 'K';
+  return num.toString();
 }
 
 // Helper function to build page number sequence with ellipsis (1, 2, 3 ... 300)
@@ -140,9 +111,7 @@ const paginationRange = getPaginationRange(1, totalPages);
       <div class="flex flex-wrap gap-2">
         <a 
           href="/" 
-          class={`rounded-full px-4 py-2 text-xs font-semibold whitespace-nowrap border min-h-[44px] inline-flex items-center transition-all ${
-            !activeCategory ? 'bg-rose-600 border-rose-500 text-white shadow-lg shadow-rose-600/20' : 'bg-slate-900 border-slate-800 text-slate-300 hover:border-slate-700'
-          }`}
+          class="rounded-full px-4 py-2 text-xs font-semibold whitespace-nowrap border min-h-[44px] inline-flex items-center transition-all bg-rose-600 border-rose-500 text-white shadow-lg shadow-rose-600/20"
         >
           All Videos
         </a>
@@ -162,15 +131,7 @@ const paginationRange = getPaginationRange(1, totalPages);
 
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between border-t border-slate-900 pt-6 mb-8 gap-4">
       <div id="filter-status-text" class="text-sm text-slate-400">
-        {searchQuery ? (
-          <span>Search results for "<span class="text-rose-400 font-medium">{searchQuery}</span>"</span>
-        ) : activeCategory ? (
-          <span>Showing <span class="text-rose-400 font-medium">{activeCategory}</span> videos</span>
-        ) : activeTag ? (
-          <span>Tagged with "<span class="text-rose-400 font-medium">{activeTag}</span>"</span>
-        ) : (
-          <span>Showing <span class="text-rose-400 font-medium">All Trending</span> Videos</span>
-        )}
+        <span>Showing <span class="text-rose-400 font-medium">All Trending</span> Videos</span>
         <span class="text-xs text-slate-400 ml-1">({filteredVideos.length} items)</span>
       </div>
 
@@ -190,7 +151,7 @@ const paginationRange = getPaginationRange(1, totalPages);
         <h3 class="text-lg font-bold text-slate-200">No Videos Found</h3>
       </div>
     ) : (
-      <div id="video-grid" class={`grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 ${isDefaultHome ? 'home-rotator' : ''}`}>
+      <div id="video-grid" class="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
         {pagedVideos.map((video, idx) => (
           <VideoCard 
             video={video} 
@@ -200,45 +161,6 @@ const paginationRange = getPaginationRange(1, totalPages);
         ))}
       </div>
     )}
-
-    {/* Visitor Rotator Script */}
-    <script is:inline>
-      (function() {
-        try {
-          const activeCategory = new URLSearchParams(window.location.search).get('category');
-          const activeTag = new URLSearchParams(window.location.search).get('tag');
-          const searchQuery = new URLSearchParams(window.location.search).get('search');
-          
-          if (!activeCategory && !activeTag && !searchQuery && (window.location.pathname === '/' || window.location.pathname === '/index.html')) {
-            const visits = parseInt(localStorage.getItem('vix_home_visits') || '0', 10);
-            const activeGroup = visits % 3;
-            
-            const grid = document.getElementById('video-grid');
-            if (grid) {
-              const cards = grid.querySelectorAll(':scope > a');
-              cards.forEach((card, idx) => {
-                const cardGroup = Math.floor(idx / 40);
-                if (cardGroup === activeGroup) {
-                  card.style.display = 'flex';
-                } else {
-                  card.style.display = 'none';
-                }
-              });
-              grid.classList.remove('home-rotator');
-            }
-            localStorage.setItem('vix_home_visits', (visits + 1).toString());
-          }
-        } catch (e) {
-          console.error('Home visit rotator error:', e);
-        }
-      })();
-    </script>
-
-    <style>
-      .home-rotator > a:nth-child(n+41) {
-        display: none !important;
-      }
-    </style>
 
     <!-- Numbered Pagination Container -->
     {totalPages > 1 && (
@@ -311,10 +233,21 @@ const paginationRange = getPaginationRange(1, totalPages);
         const videoGrid = document.querySelector('#video-grid');
         const paginationContainer = document.querySelector('#pagination-container');
         const filterStatus = document.querySelector('#filter-status-text');
-        
-        let noResultsDiv = document.querySelector('#no-results-message');
 
         let videosData = [];
+
+        // FIXED: escapes any HTML in a string before it's ever inserted into
+        // the page, so a malicious/broken title or category (e.g. containing
+        // <script> or " onerror=) can't execute as code (XSS).
+        function escapeHtml(str) {
+          if (str === null || str === undefined) return '';
+          return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+        }
 
         fetch('/videos.json')
           .then(res => res.json())
@@ -358,25 +291,35 @@ const paginationRange = getPaginationRange(1, totalPages);
           );
 
           if (paginationContainer) paginationContainer.classList.add('hidden');
-          if (filterStatus) filterStatus.innerHTML = `Search results for "<span class="text-rose-400 font-medium">${query}</span>" (${results.length} items)`;
+          // FIXED: query is now escaped before being placed into innerHTML
+          if (filterStatus) filterStatus.innerHTML = `Search results for "<span class="text-rose-400 font-medium">${escapeHtml(query)}</span>" (${results.length} items)`;
 
           renderVideos(results);
         }
 
         function renderVideos(items) {
           if (!videoGrid) return;
-          videoGrid.innerHTML = items.map(item => `
-            <a href="/videos/${item.slug}" class="group relative flex flex-col rounded-2xl overflow-hidden border border-slate-900 bg-slate-950/40 backdrop-blur-sm transition-all duration-300 hover:border-rose-500/30 hover:-translate-y-1">
+          // FIXED: title, category, and thumbnailUrl are all escaped before
+          // being inserted into innerHTML — previously these came straight
+          // from database.json with no sanitization.
+          videoGrid.innerHTML = items.map(item => {
+            const safeTitle = escapeHtml(item.title);
+            const safeCategory = escapeHtml(item.category);
+            const safeSlug = escapeHtml(item.slug);
+            const safeThumb = item.thumbnailUrl ? escapeHtml(item.thumbnailUrl) : '';
+            return `
+            <a href="/videos/${safeSlug}" class="group relative flex flex-col rounded-2xl overflow-hidden border border-slate-900 bg-slate-950/40 backdrop-blur-sm transition-all duration-300 hover:border-rose-500/30 hover:-translate-y-1">
               <div class="relative aspect-video w-full overflow-hidden flex items-center justify-center bg-slate-950">
-                ${item.thumbnailUrl ? `<img src="${item.thumbnailUrl}" referrerpolicy="no-referrer" alt="${item.title}" loading="lazy" class="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-500" />` : ''}
+                ${safeThumb ? `<img src="${safeThumb}" referrerpolicy="no-referrer" alt="${safeTitle}" loading="lazy" class="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-500" />` : ''}
                 <div class="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-slate-950/30"></div>
-                <span class="absolute bottom-3 right-3 z-10 rounded-md bg-gradient-to-r from-rose-600 to-pink-600 px-2.5 py-0.5 text-[9px] font-extrabold uppercase tracking-wider text-white">${item.category}</span>
+                <span class="absolute bottom-3 right-3 z-10 rounded-md bg-gradient-to-r from-rose-600 to-pink-600 px-2.5 py-0.5 text-[9px] font-extrabold uppercase tracking-wider text-white">${safeCategory}</span>
               </div>
               <div class="flex flex-col flex-1 p-4 bg-slate-950/20">
-                <h3 class="text-sm font-bold text-slate-200 line-clamp-2 group-hover:text-rose-400 transition-colors min-h-[40px] leading-snug">${item.title}</h3>
+                <h3 class="text-sm font-bold text-slate-200 line-clamp-2 group-hover:text-rose-400 transition-colors min-h-[40px] leading-snug">${safeTitle}</h3>
               </div>
             </a>
-          `).join('');
+          `;
+          }).join('');
         }
       });
     </script>
