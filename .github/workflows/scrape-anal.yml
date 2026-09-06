@@ -1,9 +1,8 @@
 name: Scrape Anal Videos
 
 on:
-  workflow_dispatch: # GitHub UI එකෙන් manually run කරන්න
+  workflow_dispatch:
 
-# Repo එකට Commit & Push කිරීමට අවශ්‍ය Permissions ලබා දීම
 permissions:
   contents: write
 
@@ -22,9 +21,10 @@ jobs:
       - name: Install Dependencies
         run: npm install axios
 
-      # ES Module (import statement) අවුල නැති කිරීමට --input-type=module ලෙස run කිරීම
-      - name: Run Anal Scraper Script
-        run: node --input-type=module scrape-anal.js
+      - name: Verify File Existence & Run Script
+        run: |
+          ls -la
+          node scrape-anal.js
 
       - name: Commit and Push Changes
         run: |
