@@ -1,91 +1,57 @@
 ---
-export const prerender = true;
-
-import { getCollection } from 'astro:content';
----
 import { getCollection } from 'astro:content';
 import Layout from '../../../layouts/Layout.astro';
-import AdContainer from '../../../components/AdContainer.astro';
 import VideoCard from '../../../components/VideoCard.astro';
 
-export async function getStaticPaths() {
-  const allVideos = await getCollection('videos');
-  const slugify = (text: string) =>
-    text.toString().toLowerCase()
-      .replace(/\s+/g, '-').replace(/[^\w\-]+/g, '')
-      .replace(/\-\-+/g, '-').replace(/^-+/, '').replace(/-+$/, '');
-
-  // Category Map එකක් හරහා Duplicate Categories එකට Merge කිරීම
-  const categoryMap = new Map<string, string>();
-  allVideos.forEach(v => {
-    if (v.data.category) {
-      const lower = v.data.category.toLowerCase();
-      if (!categoryMap.has(lower)) {
-        const formattedName = v.data.category.charAt(0).toUpperCase() + v.data.category.slice(1);
-        categoryMap.set(lower, formattedName);
-      }
-    }
-  });
-
-  const allCategories = Array.from(categoryMap.values()).sort((a, b) => {
-    if (a === 'Indian') return -1;
-    if (b === 'Indian') return 1;
-    return a.localeCompare(b);
-  });
-  
-  const paths = [];
-  const PER_PAGE = 40;
-  
-  for (const [lowerCat, category] of categoryMap.entries()) {
-    // Exact Case-insensitive Filter මගින් සියලුම Videos එකතු කිරීම
-    const categoryVideos = allVideos
-      .filter(v => v.data.category && v.data.category.toLowerCase() === lowerCat)
-      .sort((a, b) => new Date(b.data.dateAdded).getTime() - new Date(a.data.dateAdded).getTime());
-      
-    const totalVideos = categoryVideos.length;
-    const totalPages = Math.ceil(totalVideos / PER_PAGE);
-    
-    for (let p = 2; p <= totalPages; p++) {
-      paths.push({
-        params: { slug: slugify(category), page: p.toString() },
-        props: { 
-          categoryName: category,
-          allCategories,
-          pagedVideos: categoryVideos.slice((p - 1) * PER_PAGE, p * PER_PAGE),
-          totalVideos,
-          totalPages
-        }
-      });
-    }
-  }
-  
-  return paths;
-}
-
 const { slug, page } = Astro.params;
-const { categoryName, allCategories, pagedVideos, totalVideos, totalPages } = Astro.props;
 const currentPage = parseInt(page || '2', 10);
-const VIDEOS_PER_PAGE = 40;
+const PER_PAGE = 40;
 
 const slugify = (text: string) =>
   text.toString().toLowerCase()
     .replace(/\s+/g, '-').replace(/[^\w\-]+/g, '')
     .replace(/\-\-+/g, '-').replace(/^-+/, '').replace(/-+$/, '');
 
-const videos = pagedVideos;
-const baseSlug = slug;
+const allVideos = await getCollection('videos');
 
-function formatViews(val: string | number) {
-  if (typeof val === 'string') return val;
-  if (val >= 1000000) return (val / 1000000).toFixed(1) + 'M';
-  if (val >= 1000) return (val / 1000).toFixed(0) + 'K';
-  return val.toString();
+// Get all categories for header navigation
+const categoryMap = new Map<string, string>();
+allVideos.forEach(v => {
+  if (v.data.category) {
+    const lower = v.data.category.toLowerCase();
+    if (!categoryMap.has(lower)) {
+      const formattedName = v.data.category.charAt(0).toUpperCase() + v.data.category.slice(1);
+      categoryMap.set(lower, formattedName);
+    }
+  }
+});
+
+const allCategories = Array.from(categoryMap.values()).sort((a, b) => {
+  if (a === 'Indian') return -1;
+  if (b === 'Indian') return 1;
+  return a.localeCompare(b);
+});
+
+// Find matching category name and filter videos
+let categoryName = slug || '';
+for (const [lowerCat, originalCat] of categoryMap.entries()) {
+  if (slugify(originalCat) === slug) {
+    categoryName = originalCat;
+    break;
+  }
 }
 
-const prevUrl = currentPage === 2 ? `/category/${baseSlug}` : `/category/${baseSlug}/${currentPage - 1}`;
-const nextUrl = currentPage < totalPages ? `/category/${baseSlug}/${currentPage + 1}` : null;
+const categoryVideos = allVideos
+  .filter(v => v.data.category && slugify(v.data.category) === slug)
+  .sort((a, b) => new Date(b.data.dateAdded).getTime() - new Date(a.data.dateAdded).getTime());
 
-// Page numbers to show
+const totalVideos = categoryVideos.length;
+const totalPages = Math.ceil(totalVideos / PER_PAGE);
+const pagedVideos = categoryVideos.slice((currentPage - 1) * PER_PAGE, currentPage * PER_PAGE);
+
+const prevUrl = currentPage === 2 ? `/category/${slug}` : `/category/${slug}/${currentPage - 1}`;
+const nextUrl = currentPage < totalPages ? `/category/${slug}/${currentPage + 1}` : null;
+
 const pageRange = Array.from({ length: totalPages }, (_, i) => i + 1).filter(p =>
   p === 1 || p === totalPages || Math.abs(p - currentPage) <= 2
 );
@@ -104,7 +70,6 @@ const pageRange = Array.from({ length: totalPages }, (_, i) => i + 1).filter(p =
       <p class="mx-auto mt-4 max-w-2xl text-sm sm:text-base text-slate-400">
         {totalVideos} videos · Page {currentPage} of {totalPages}
       </p>
-
     </div>
   </section>
 
@@ -128,14 +93,14 @@ const pageRange = Array.from({ length: totalPages }, (_, i) => i + 1).filter(p =
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between border-t border-slate-900 pt-6 mb-8 gap-4">
       <div class="text-sm text-slate-400">
         Category: <span class="text-rose-400 font-medium">{categoryName}</span>
-        <span class="text-xs text-slate-600 ml-1">({totalVideos} total · showing {videos.length})</span>
+        <span class="text-xs text-slate-600 ml-1">({totalVideos} total · showing {pagedVideos.length})</span>
       </div>
       <div class="text-xs text-slate-500 font-medium">Page <span class="text-white font-bold">{currentPage}</span> / {totalPages}</div>
     </div>
 
     <!-- Video grid -->
     <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-      {videos.map((video) => (
+      {pagedVideos.map((video) => (
         <VideoCard video={video} />
       ))}
     </div>
@@ -155,7 +120,7 @@ const pageRange = Array.from({ length: totalPages }, (_, i) => i + 1).filter(p =
           return (
             <>
               {showDots && <span class="text-slate-600 px-1">…</span>}
-              <a href={p === 1 ? `/category/${baseSlug}` : `/category/${baseSlug}/${p}`}
+              <a href={p === 1 ? `/category/${slug}` : `/category/${slug}/${p}`}
                 class={`w-9 h-9 flex items-center justify-center rounded-lg text-sm font-bold transition-all ${
                   p === currentPage
                     ? 'bg-rose-600 text-white border border-rose-500 shadow-lg shadow-rose-600/30'
