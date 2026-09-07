@@ -4,28 +4,23 @@ import Layout from '../../layouts/Layout.astro';
 import AdContainer from '../../components/AdContainer.astro';
 import VideoCard from '../../components/VideoCard.astro';
 
-// SSR page: no getStaticPaths. This renders on-demand per request, so
-// there is no limit on how many videos the site can have (100k, 500k —
-// doesn't matter, nothing is generated at build time).
-
+// SSR page: no getStaticPaths. This renders on-demand per request.
 const { slug } = Astro.params;
 
 const allVideos = await getCollection('videos');
 const video = allVideos.find(v => v.data?.slug === slug);
 
-// If no video matches this slug, return a real 404 instead of falling
-// back to the home page.
+// If no video matches this slug, return a real 404
 if (!video) {
   return new Response(null, { status: 404, statusText: 'Video not found' });
 }
 
-const { title, embedUrl, rating, views, category, tags = [], dateAdded, thumbnailUrl } = video.data;
+const { title, embedUrl, rating, views, category, tags = [], dateAdded, thumbnailUrl, duration } = video.data;
 
 const uniqueTitle = title;
 const uniqueDescription = `Watch ${title} embedded video online for free. Category: ${category}.`;
 
-// Related videos: only scan the video list once, per request, for this
-// one category — not O(n^2) across the whole catalog like before.
+// Related videos
 const relatedVideos = allVideos
   .filter(v => v.data.category === category && v.data.slug !== slug)
   .slice(0, 4);
@@ -52,18 +47,30 @@ function safeISODate(dateStr: string) {
   } catch (e) {}
   return new Date().toISOString();
 }
+
+// Convert duration to ISO 8601 duration string for Google Video Schema
+function formatISODuration(dur: string | number | undefined) {
+  if (!dur) return "PT5M"; // Default to 5 mins if not specified
+  const sec = parseInt(dur.toString(), 10);
+  if (isNaN(sec)) return "PT5M";
+  const minutes = Math.floor(sec / 60);
+  const remainingSeconds = sec % 60;
+  return `PT${minutes}M${remainingSeconds}S`;
+}
 ---
 
 <Layout title={uniqueTitle} description={uniqueDescription} isVideoPage={true}>
-  {/* Google Video Object Schema */}
+  {/* Google Video Object Schema Optimized for Fast Indexing */}
   <script type="application/ld+json" set:html={JSON.stringify({
     "@context": "https://schema.org",
     "@type": "VideoObject",
     "name": uniqueTitle,
-    "description": `Watch ${uniqueTitle} video online for free. Category: ${category}.`,
-    "thumbnailUrl": thumbnailUrl || "https://vixtube.net/og-image.jpg",
+    "description": `Watch ${uniqueTitle} embedded video online for free on VixTube. Category: ${category}.`,
+    "thumbnailUrl": thumbnailUrl ? [thumbnailUrl] : ["https://vixtube.net/og-image.jpg"],
     "uploadDate": safeISODate(dateAdded),
     "embedUrl": embedUrl,
+    "familyFriendly": false,
+    "duration": formatISODuration(duration),
     "interactionStatistic": {
       "@type": "InteractionCounter",
       "interactionType": { "@type": "WatchAction" },
