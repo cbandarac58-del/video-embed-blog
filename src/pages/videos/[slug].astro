@@ -4,50 +4,31 @@ import Layout from '../../layouts/Layout.astro';
 import AdContainer from '../../components/AdContainer.astro';
 import VideoCard from '../../components/VideoCard.astro';
 
-export async function getStaticPaths() {
-  const allVideos = await getCollection('videos');
+// SSR page: no getStaticPaths. This renders on-demand per request, so
+// there is no limit on how many videos the site can have (100k, 500k —
+// doesn't matter, nothing is generated at build time).
 
-  // Filter valid video objects with proper slugs
-  // NOTE: removed the old `.slice(0, 300)` — that was hiding thousands of videos.
-  const videos = allVideos.filter(v =>
-    v?.data?.slug &&
-    typeof v.data.slug === 'string' &&
-    v.data.slug.trim() !== ''
-  );
+const { slug } = Astro.params;
 
-  // Group videos by category ONCE (O(n)) instead of re-filtering the
-  // entire 13,000+ video list for every single page (O(n^2)).
-  // This is what was actually crashing the Cloudflare build at scale.
-  const byCategory = new Map();
-  for (const v of videos) {
-    const cat = v.data.category || 'Other';
-    if (!byCategory.has(cat)) byCategory.set(cat, []);
-    byCategory.get(cat).push(v);
-  }
+const allVideos = await getCollection('videos');
+const video = allVideos.find(v => v.data?.slug === slug);
 
-  return videos.map((video) => {
-    const { title, category = 'Other', slug } = video.data;
-
-    // O(1) lookup instead of scanning all videos again
-    const categoryVideos = byCategory.get(category) || [];
-    const relatedVideos = categoryVideos
-      .filter(v => v.data.slug !== slug)
-      .slice(0, 4);
-
-    return {
-      params: { slug },
-      props: {
-        video,
-        uniqueTitle: title,
-        uniqueDescription: `Watch ${title} embedded video online for free. Category: ${category}.`,
-        relatedVideos
-      }
-    };
-  });
+// If no video matches this slug, return a real 404 instead of falling
+// back to the home page.
+if (!video) {
+  return new Response(null, { status: 404, statusText: 'Video not found' });
 }
 
-const { video, uniqueTitle, uniqueDescription, relatedVideos } = Astro.props;
 const { title, embedUrl, rating, views, category, tags = [], dateAdded, thumbnailUrl } = video.data;
+
+const uniqueTitle = title;
+const uniqueDescription = `Watch ${title} embedded video online for free. Category: ${category}.`;
+
+// Related videos: only scan the video list once, per request, for this
+// one category — not O(n^2) across the whole catalog like before.
+const relatedVideos = allVideos
+  .filter(v => v.data.category === category && v.data.slug !== slug)
+  .slice(0, 4);
 
 const catSlug = (category || 'other')
   .toLowerCase()
