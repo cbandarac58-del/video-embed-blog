@@ -1,92 +1,63 @@
 ---
 import { getCollection } from 'astro:content';
 import Layout from '../../layouts/Layout.astro';
-import AdContainer from '../../components/AdContainer.astro';
 import VideoCard from '../../components/VideoCard.astro';
 
-export async function getStaticPaths() {
-  const allVideos = await getCollection('videos');
-  const slugify = (text: string) =>
-    text.toString().toLowerCase()
-      .replace(/\s+/g, '-')
-      .replace(/[^\w\-]+/g, '')
-      .replace(/\-\-+/g, '-')
-      .replace(/^-+/, '')
-      .replace(/-+$/, '');
-
-  // Category Map එකක් හරහා Duplicate Categories එකට Merge කිරීම
-  const categoryMap = new Map<string, string>();
-  allVideos.forEach(v => {
-    if (v.data.category) {
-      const lower = v.data.category.toLowerCase();
-      if (!categoryMap.has(lower)) {
-        const formattedName = v.data.category.charAt(0).toUpperCase() + v.data.category.slice(1);
-        categoryMap.set(lower, formattedName);
-      }
-    }
-  });
-
-  const allCategories = Array.from(categoryMap.values()).sort((a, b) => {
-    if (a === 'Indian') return -1;
-    if (b === 'Indian') return 1;
-    return a.localeCompare(b);
-  });
-
-  const PER_PAGE = 40;
-
-  return Array.from(categoryMap.entries()).map(([lowerCat, category]) => {
-    // Case-insensitive Filter මගින් stepsister සහ Stepsister දෙකම එකතු කිරීම
-    const categoryVideos = allVideos
-      .filter(v => v.data.category && v.data.category.toLowerCase() === lowerCat)
-      .sort((a, b) => new Date(b.data.dateAdded).getTime() - new Date(a.data.dateAdded).getTime());
-
-    const totalVideos = categoryVideos.length;
-    const totalPages = Math.ceil(totalVideos / PER_PAGE);
-    const paginatedVideos = categoryVideos.slice(0, PER_PAGE);
-
-    return {
-      params: { slug: slugify(category) },
-      props: {
-        categoryName: category,
-        allCategories,
-        videos: paginatedVideos,
-        totalVideos,
-        totalPages
-      }
-    };
-  });
-}
-
+// SSR mode: Extract slug from URL params
 const { slug } = Astro.params;
-const { categoryName, allCategories, videos, totalVideos, totalPages } = Astro.props;
+const PER_PAGE = 40;
 
 const slugify = (text: string) =>
-  text.toString().toLowerCase()
-    .replace(/\s+/g, '-')
-    .replace(/[^\w\-]+/g, '')
-    .replace(/\-\-+/g, '-')
-    .replace(/^-+/, '')
-    .replace(/-+$/, '');
+  text
+    ? text
+        .toString()
+        .toLowerCase()
+        .replace(/\s+/g, '-')
+        .replace(/[^\w\-]+/g, '')
+        .replace(/\-\-+/g, '-')
+        .replace(/^-+/, '')
+        .replace(/-+$/, '')
+    : '';
 
-const currentPage = 1;
+const allVideos = await getCollection('videos');
+
+// Build Category Map
+const categoryMap = new Map<string, string>();
+allVideos.forEach(v => {
+  if (v.data && v.data.category) {
+    const lower = v.data.category.toLowerCase();
+    if (!categoryMap.has(lower)) {
+      const formattedName = v.data.category.charAt(0).toUpperCase() + v.data.category.slice(1);
+      categoryMap.set(lower, formattedName);
+    }
+  }
+});
+
+const allCategories = Array.from(categoryMap.values()).sort((a, b) => {
+  if (a === 'Indian') return -1;
+  if (b === 'Indian') return 1;
+  return a.localeCompare(b);
+});
+
+// Resolve current category name from slug
+let categoryName = slug || '';
+for (const [lowerCat, originalCat] of categoryMap.entries()) {
+  if (slugify(originalCat) === slug) {
+    categoryName = originalCat;
+    break;
+  }
+}
+
+// Filter videos for the current category slug
+const categoryVideos = allVideos
+  .filter(v => v.data && v.data.category && slugify(v.data.category) === slug)
+  .sort((a, b) => new Date(b.data.dateAdded || 0).getTime() - new Date(a.data.dateAdded || 0).getTime());
+
+const totalVideos = categoryVideos.length;
+const totalPages = Math.ceil(totalVideos / PER_PAGE) || 1;
+const videos = categoryVideos.slice(0, PER_PAGE);
+
 const baseSlug = slug;
-
-function formatViews(val: string | number) {
-  if (typeof val === 'string') return val;
-  if (val >= 1000000) return (val / 1000000).toFixed(1) + 'M';
-  if (val >= 1000) return (val / 1000).toFixed(0) + 'K';
-  return val.toString();
-}
-
-function getCardGradient(videoSlug: string) {
-  const hash = videoSlug.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-  const gradients = [
-    'from-rose-600/20 to-purple-600/10','from-purple-600/20 to-indigo-600/10',
-    'from-pink-600/20 to-rose-600/10','from-indigo-600/20 to-violet-600/10','from-amber-600/20 to-rose-600/10',
-  ];
-  return gradients[hash % gradients.length];
-}
-
 const nextUrl = totalPages > 1 ? `/category/${baseSlug}/2` : null;
 ---
 
@@ -103,7 +74,6 @@ const nextUrl = totalPages > 1 ? `/category/${baseSlug}/2` : null;
       <p class="mx-auto mt-4 max-w-2xl text-sm sm:text-base text-slate-400">
         {totalVideos} videos · Page 1 of {totalPages}
       </p>
-
     </div>
   </section>
 
