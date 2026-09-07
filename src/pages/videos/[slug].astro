@@ -20,6 +20,9 @@ const { title, embedUrl, rating, views, category, tags = [], dateAdded, thumbnai
 const uniqueTitle = title;
 const uniqueDescription = `Watch ${title} embedded video online for free. Category: ${category}.`;
 
+// Self-Referencing Canonical URL for SEO
+const canonicalUrl = `https://vixtube.net/videos/${slug}`;
+
 // Related videos
 const relatedVideos = allVideos
   .filter(v => v.data.category === category && v.data.slug !== slug)
@@ -60,7 +63,12 @@ function formatISODuration(dur: string | number | undefined) {
 ---
 
 <Layout title={uniqueTitle} description={uniqueDescription} isVideoPage={true}>
-  {/* Google Video Object Schema Optimized for Fast Indexing */}
+  
+  <!-- SEO & Canonical Tags -->
+  <link rel="canonical" href={canonicalUrl} slot="head" />
+  <meta name="robots" content="index, follow, max-image-preview:large, max-video-preview:-1" slot="head" />
+
+  <!-- Google Video Object Schema Optimized for Fast Indexing -->
   <script type="application/ld+json" set:html={JSON.stringify({
     "@context": "https://schema.org",
     "@type": "VideoObject",
