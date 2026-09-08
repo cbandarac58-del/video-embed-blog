@@ -7,8 +7,8 @@ import VideoCard from '../components/VideoCard.astro';
 const VIDEOS_PER_PAGE = 40;
 const HOME_CARD_COUNT = 40;
 
-// Fetch videos collection
-let videos = [];
+// Fetch videos collection safely
+let videos: any[] = [];
 try {
   videos = await getCollection('videos');
 } catch (e) {
@@ -35,33 +35,17 @@ const categories = Array.from(categoryMap.values()).sort((a, b) => {
 
 const allTags = [...new Set(videos.flatMap(v => v.data?.tags || []))].filter(Boolean).slice(0, 15);
 
-// Homepage view filtering
+// Homepage view filtering (Excluding 'yt romance' safely)
 let filteredVideos = videos.filter(v => v.data?.category?.toLowerCase() !== 'yt romance');
 
 // Default sort: most recent first
 filteredVideos.sort((a, b) => new Date(b.data?.dateAdded || 0).getTime() - new Date(a.data?.dateAdded || 0).getTime());
 
-const totalVideos = filteredVideos.length;
-const totalPages = Math.ceil(totalVideos / VIDEOS_PER_PAGE);
+// Total Videos Count fixed to display full collection accurately
+const totalVideos = videos.length; 
+const totalPages = Math.ceil(filteredVideos.length / VIDEOS_PER_PAGE);
 
 const pagedVideos = filteredVideos.slice(0, HOME_CARD_COUNT);
-
-function formatViews(val: string | number) {
-  if (!val) return '0';
-  let num: number;
-  if (typeof val === 'string') {
-    const cleaned = val.trim().toLowerCase();
-    if (cleaned.endsWith('m')) return val; 
-    if (cleaned.endsWith('k')) return val; 
-    num = parseFloat(cleaned);
-    if (isNaN(num)) return val; 
-  } else {
-    num = val;
-  }
-  if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
-  if (num >= 1000) return (num / 1000).toFixed(0) + 'K';
-  return num.toString();
-}
 
 function getPaginationRange(current: number, total: number) {
   const delta = 1;
@@ -124,7 +108,7 @@ const paginationRange = getPaginationRange(1, totalPages);
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between border-t border-slate-900 pt-6 mb-8 gap-4">
       <div id="filter-status-text" class="text-sm text-slate-400">
         <span>Showing <span class="text-rose-400 font-medium">All Trending</span> Videos</span>
-        <span class="text-xs text-slate-400 ml-1">({filteredVideos.length} items)</span>
+        <span class="text-xs text-slate-400 ml-1">({totalVideos} items)</span>
       </div>
 
       <div class="flex items-center space-x-2">
