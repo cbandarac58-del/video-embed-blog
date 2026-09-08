@@ -1,59 +1,15 @@
 ---
 import { getCollection } from 'astro:content';
 import Layout from '../../layouts/Layout.astro';
-import AdContainer from '../../components/AdContainer.astro';
 import VideoCard from '../../components/VideoCard.astro';
 
-export async function getStaticPaths() {
-  const allVideos = await getCollection('videos');
+// SSR Mode: Get URL Parameter directly
+const { slug, tag } = Astro.params;
+const currentSlug = slug || tag;
 
-  const slugify = (text: string) => 
-    text.toString().toLowerCase()
-      .replace(/\s+/g, '-')
-      .replace(/[^\w\-]+/g, '')
-      .replace(/\-\-+/g, '-')
-      .replace(/^-+/, '')
-      .replace(/-+$/, '');
-
-  const allCategories = [...new Set(allVideos.map(v => v.data.category))].filter(Boolean).sort((a, b) => {
-    if (a === 'Indian') return -1;
-    if (b === 'Indian') return 1;
-    return a.localeCompare(b);
-  });
-
-  const tagMap: Record<string, { tagName: string, videos: any[] }> = {};
-
-  allVideos.forEach(v => {
-    (v.data.tags || []).forEach(tag => {
-      const tagClean = tag.trim();
-      if (tagClean) {
-        const slug = slugify(tagClean);
-        // හිස් (empty) Slug නිර්මාණය වීම වැළැක්වීම (Build Fail වීම සදහටම නවතී)
-        if (slug && slug.trim() !== '') {
-          if (!tagMap[slug]) {
-            tagMap[slug] = { tagName: tagClean, videos: [] };
-          }
-          tagMap[slug].videos.push(v);
-        }
-      }
-    });
-  });
-
-  // Entry list එකෙන් Valid non-empty slug තියෙන ඒවා විතරක් map කිරීම
-  return Object.entries(tagMap)
-    .filter(([tagSlug]) => tagSlug && tagSlug.trim() !== '')
-    .map(([tagSlug, data]) => ({
-      params: { slug: tagSlug },
-      props: {
-        tagName: data.tagName,
-        allCategories,
-        videos: data.videos.sort((a, b) => new Date(b.data.dateAdded).getTime() - new Date(a.data.dateAdded).getTime())
-      }
-    }));
+if (!currentSlug) {
+  return new Response(null, { status: 404, statusText: 'Tag Slug Not Found' });
 }
-
-const { slug } = Astro.params;
-const { tagName, allCategories, videos } = Astro.props;
 
 const slugify = (text: string) => 
   text.toString().toLowerCase()
@@ -63,38 +19,52 @@ const slugify = (text: string) =>
     .replace(/^-+/, '')
     .replace(/-+$/, '');
 
-const topTitles = videos.slice(0, 2).map(v => v.data.title).join(', ');
-const tagDesc = `Watch ${videos.length} free ${tagName} XXX videos online. Top picks: ${topTitles}. Stream HD adult content on any device.`;
+const allVideos = await getCollection('videos');
 
-function formatViews(val: string | number) {
-  if (typeof val === 'string') return val;
-  if (val >= 1000000) return (val / 1000000).toFixed(1) + 'M';
-  if (val >= 1000) return (val / 1000).toFixed(0) + 'K';
-  return val.toString();
+// Get All Categories safely
+const allCategories = [...new Set(allVideos.map(v => v.data?.category))].filter(Boolean).sort((a, b) => {
+  if (a === 'Indian') return -1;
+  if (b === 'Indian') return 1;
+  return a.localeCompare(b);
+});
+
+// Search for videos matching the tag slug safely
+let foundTagName = currentSlug.replace(/-/g, ' ');
+const filteredVideos = allVideos.filter(v => {
+  const tags = v.data?.tags || [];
+  return tags.some((t: string) => {
+    const cleanTag = t.trim();
+    if (slugify(cleanTag) === currentSlug) {
+      foundTagName = cleanTag; // Preserve original casing (e.g. "Big Tits")
+      return true;
+    }
+    return false;
+  });
+}).sort((a, b) => new Date(b.data.dateAdded).getTime() - new Date(a.data.dateAdded).getTime());
+
+// If no videos found for this tag slug, return 404
+if (filteredVideos.length === 0) {
+  return new Response(null, { status: 404, statusText: 'No videos found for this tag' });
 }
 
-function getCardGradient(videoSlug: string) {
-  const hash = videoSlug.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-  const gradients = [
-    'from-rose-600/20 to-purple-600/10 hover:from-rose-500/30 hover:to-purple-500/20',
-    'from-purple-600/20 to-indigo-600/10 hover:from-purple-500/30 hover:to-indigo-500/20',
-    'from-pink-600/20 to-rose-600/10 hover:from-pink-500/30 hover:to-rose-500/20',
-    'from-indigo-600/20 to-violet-600/10 hover:from-indigo-500/30 hover:to-violet-500/20',
-    'from-amber-600/20 to-rose-600/10 hover:from-amber-500/30 hover:to-rose-500/20',
-  ];
-  return gradients[hash % gradients.length];
-}
+const tagName = foundTagName;
+const topTitles = filteredVideos.slice(0, 2).map(v => v.data.title).join(', ');
+const tagDesc = `Watch ${filteredVideos.length} free ${tagName} XXX videos online. Top picks: ${topTitles}. Stream HD adult content on any device.`;
+const canonicalUrl = `https://vixtube.net/tag/${currentSlug}`;
 ---
 
 <Layout 
-  title={`${tagName} Videos – ${videos.length} Free XXX Clips | VixTube`}
+  title={`${tagName} Videos – ${filteredVideos.length} Free XXX Clips | VixTube`}
   description={tagDesc}
 >
+  <link rel="canonical" href={canonicalUrl} slot="head" />
+  <meta name="robots" content="index, follow" slot="head" />
+
   <!-- Hero Banner -->
   <section class="relative overflow-hidden bg-slate-950 py-12 border-b border-slate-900">
     <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-rose-950/20 via-slate-950 to-slate-950"></div>
     <div class="relative mx-auto max-w-7xl px-4 text-center sm:px-6 lg:px-8">
-      <h1 class="text-3xl font-extrabold tracking-tight text-white sm:text-5xl lg:text-6xl">
+      <h1 class="text-3xl font-extrabold tracking-tight text-white sm:text-5xl lg:text-6xl capitalize">
         Videos Tagged: <span class="bg-gradient-to-r from-rose-500 via-pink-500 to-amber-500 bg-clip-text text-transparent">#{tagName}</span>
       </h1>
       <p class="mx-auto mt-4 max-w-2xl text-sm sm:text-base text-slate-400">
@@ -131,18 +101,18 @@ function getCardGradient(videoSlug: string) {
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between border-t border-slate-900 pt-6 mb-8 gap-4">
       <div class="text-sm text-slate-400">
         Showing videos tagged with: <span class="text-rose-400 font-medium">#{tagName}</span> 
-        <span class="text-xs text-slate-600 ml-1">({videos.length} items)</span>
+        <span class="text-xs text-slate-600 ml-1">({filteredVideos.length} items)</span>
       </div>
     </div>
 
     <!-- Video Grid -->
-    {videos.length === 0 ? (
+    {filteredVideos.length === 0 ? (
       <div class="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-800 py-20 text-center">
         <h3 class="text-lg font-bold text-slate-200">No Videos Found</h3>
       </div>
     ) : (
       <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-        {videos.map((video) => (
+        {filteredVideos.map((video) => (
           <VideoCard video={video} />
         ))}
       </div>
