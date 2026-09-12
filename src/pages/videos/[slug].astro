@@ -20,6 +20,9 @@ const { title, embedUrl, rating, views, category, tags = [], dateAdded, thumbnai
 const uniqueTitle = title;
 const uniqueDescription = `Watch ${title} embedded video online for free. Category: ${category}.`;
 
+// Extended auto-generated description for fixing Yandex BAD_QUALITY (Thin content)
+const extendedDescription = `Watch the full video titled "${uniqueTitle}" online for free in ${category} category on VixTube. This embedded video page features high-quality streaming, user ratings (${rating}%), and tags including ${tags.join(', ')}. Stream or share this media file instantly without interruptions.`;
+
 // Self-Referencing Canonical URL for SEO
 const canonicalUrl = `https://vixtube.net/videos/${slug}`;
 
@@ -160,6 +163,17 @@ function formatISODuration(dur: string | number | undefined) {
           <h1 class="text-xl font-extrabold text-white sm:text-2xl lg:text-3xl leading-snug">
             {uniqueTitle}
           </h1>
+
+          {/* SEO Text Content Expansion to fix BAD_QUALITY / Thin Content */}
+          <div class="my-4 rounded-xl border border-slate-900 bg-slate-950/40 p-4 text-xs text-slate-400 leading-relaxed space-y-2">
+            <h2 class="text-xs font-bold text-slate-300 uppercase tracking-wider">About This Video</h2>
+            <p>{extendedDescription}</p>
+            <div class="flex flex-wrap gap-x-4 gap-y-1 pt-1 text-[11px] text-slate-500">
+              <span>Category: <strong class="text-slate-400">{category}</strong></span>
+              <span>Total Views: <strong class="text-slate-400">{formatViews(views)}</strong></span>
+              <span>Community Rating: <strong class="text-slate-400">{rating}%</strong></span>
+            </div>
+          </div>
 
           <!-- Stats Dashboard -->
           <div class="flex flex-wrap items-center justify-between mt-4 gap-4 text-xs text-slate-400">
