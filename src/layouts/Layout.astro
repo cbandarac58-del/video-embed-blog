@@ -7,6 +7,7 @@ interface Props {
   keywords?: string;
   isVideoPage?: boolean;
   lang?: string;
+  robots?: string;
 }
 
 const { 
@@ -14,7 +15,8 @@ const {
   description = "Watch top-trending free adult videos, hot amateur clips, and premium XXX streaming content. Fully optimized for all mobile devices.",
   keywords = "adult videos, free porn, xxx clips, hot amateur, desi bhabhi, stepsister sex, 18+ stream",
   isVideoPage = false,
-  lang = Astro.url.pathname.startsWith('/es') ? 'es' : 'en'
+  lang = Astro.url.pathname.startsWith('/es') ? 'es' : 'en',
+  robots = "index, follow"
 } = Astro.props;
 
 // Absolute URL for SEO
@@ -56,6 +58,7 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site || 'https://vixtube.
     <meta name="juicyads-site-verification" content="50b02a451fcf18adb72adb6c073cdb6c">
 
     <!-- Robot tags -->
+    <meta name="robots" content={robots} />
     {!isVideoPage && <meta name="robots" content="max-video-preview:0" />}
 
     <!-- Open Graph / Facebook -->
@@ -163,8 +166,6 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site || 'https://vixtube.
       <slot />
     </main>
 
-
-
     <!-- Footer -->
     <footer class="border-t border-slate-900 bg-slate-950 py-10 mt-12 text-sm text-slate-500 pb-28 md:pb-10">
       <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -213,7 +214,7 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site || 'https://vixtube.
       </div>
     </footer>
 
-    <!-- Mobile Bottom Navigation Bar (Floating capsule, premium glassmorphism) -->
+    <!-- Mobile Bottom Navigation Bar -->
     <nav class="fixed bottom-4 left-4 right-4 z-40 md:hidden bg-slate-950/90 backdrop-blur-xl border border-slate-800/80 rounded-2xl max-w-md mx-auto px-4 py-1 flex justify-around items-center text-xs font-semibold shadow-2xl shadow-rose-950/10">
       <a href="/" aria-label="Home page" class="flex flex-col items-center justify-center space-y-0.5 text-slate-400 hover:text-rose-500 transition-all active:scale-95 min-h-[48px] min-w-[48px] p-1">
         <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -281,14 +282,12 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site || 'https://vixtube.
               await loadSearchMaps();
             }
 
-            // Check for exact category match
             if (categorySlugMap && categorySlugMap[query]) {
               e.preventDefault();
               window.location.href = `/category/${categorySlugMap[query]}`;
               return;
             }
 
-            // Check for exact tag match
             if (tagSlugMap && tagSlugMap[query]) {
               e.preventDefault();
               window.location.href = `/tag/${tagSlugMap[query]}`;
@@ -297,7 +296,6 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site || 'https://vixtube.
           });
         });
         
-        // Highlight active link in mobile bottom nav bar
         const path = window.location.pathname;
         const bottomLinks = document.querySelectorAll('nav.fixed a');
         bottomLinks.forEach(link => {
