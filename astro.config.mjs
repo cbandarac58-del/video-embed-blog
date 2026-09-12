@@ -9,4 +9,5 @@ export default defineConfig({
     entrypointResolution: 'auto',
   }),
   site: 'https://vixtube.net',
+  trailingSlash: 'always',
 });
