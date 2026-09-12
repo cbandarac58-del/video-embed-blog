@@ -28,7 +28,7 @@ export async function GET() {
   });
   const tags = Array.from(tagsSet);
 
-  // Build the XML sitemap
+  // Build the XML sitemap with trailing slashes ('always' rule applied)
   const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <!-- Main Homepage -->
@@ -40,34 +40,34 @@ export async function GET() {
   
   <!-- Legal Pages -->
   <url>
-    <loc>https://vixtube.net/dmca</loc>
+    <loc>https://vixtube.net/dmca/</loc>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://vixtube.net/terms</loc>
+    <loc>https://vixtube.net/terms/</loc>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://vixtube.net/privacy</loc>
+    <loc>https://vixtube.net/privacy/</loc>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://vixtube.net/contact</loc>
+    <loc>https://vixtube.net/contact/</loc>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
 
   <!-- Popular & Featured Static Pages -->
   <url>
-    <loc>https://vixtube.net/popular</loc>
+    <loc>https://vixtube.net/popular/</loc>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://vixtube.net/featured</loc>
+    <loc>https://vixtube.net/featured/</loc>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
@@ -75,7 +75,7 @@ export async function GET() {
   <!-- Categories Pages -->
   ${categories.map((cat) => `
   <url>
-    <loc>https://vixtube.net/category/${slugify(cat)}</loc>
+    <loc>https://vixtube.net/category/${slugify(cat)}/</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>`).join('')}
@@ -83,7 +83,7 @@ export async function GET() {
   <!-- Tags Pages -->
   ${tags.map((tagSlug) => `
   <url>
-    <loc>https://vixtube.net/tag/${tagSlug}</loc>
+    <loc>https://vixtube.net/tag/${tagSlug}/</loc>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>`).join('')}
@@ -91,7 +91,7 @@ export async function GET() {
   <!-- Individual Video Pages -->
   ${videos.map((video) => `
   <url>
-    <loc>https://vixtube.net/videos/${video.data.slug}</loc>
+    <loc>https://vixtube.net/videos/${video.data.slug}/</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>`).join('')}
