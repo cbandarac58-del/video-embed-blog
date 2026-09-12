@@ -1,5 +1,6 @@
 User-agent: *
 Allow: /
+Disallow: /*?search=
 
 # Block known aggressive scrapers and headless bots
 User-agent: AhrefsBot
